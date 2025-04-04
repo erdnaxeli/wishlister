@@ -8,6 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Template store all the availables templates.
+//
+// It exposes a method Render to render any of the stored templates.
+//
+// This type is expected to be used with an echo app like this
+// ```
+// e := echo.New()
+// e.Renderer = &Template{...}
+// ```
 type Template struct {
 	listAccessDenied *template.Template
 	home             *template.Template
@@ -17,9 +26,15 @@ type Template struct {
 	new              *template.Template
 }
 
+// ErrUnknownTemplate is returned when we try to render a unknow template.
 var ErrUnknownTemplate = errors.New("unknown template")
 
-func (t *Template) Render(wr io.Writer, name string, data any, c echo.Context) error {
+// Render renders a given template.
+//
+// If the template is not found, the error ErrUnknownTemplate is returned.
+//
+// Else, the template is rendered with data and the resulte is written to wr.
+func (t *Template) Render(wr io.Writer, name string, data any, _ echo.Context) error {
 	switch name {
 	case "listAccessDenied":
 		return t.listAccessDenied.Execute(wr, data)

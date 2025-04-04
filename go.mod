@@ -1,6 +1,6 @@
 module github.com/erdnaxeli/wishlister
 
-go 1.23.5
+go 1.24.2
 
 tool (
 	github.com/cortesi/modd/cmd/modd

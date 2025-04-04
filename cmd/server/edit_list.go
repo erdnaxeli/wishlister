@@ -22,7 +22,7 @@ type editListForm struct {
 }
 
 type editListFormElement struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 
 	Name        string `json:"name"`
 	NameError   string `json:"name_error"`
@@ -32,6 +32,9 @@ type editListFormElement struct {
 	Error string `json:"error"`
 }
 
+// ErrInvalidForm is the error when the from sent is invalid, meaning expected data is
+// not present. It probably means that the query was crafted and not sent through the
+// HTML form.
 var ErrInvalidForm = errors.New("invalid form")
 
 func editList(c echo.Context, app wishlister.App) error {
@@ -44,14 +47,14 @@ func editList(c echo.Context, app wishlister.App) error {
 			return c.Render(http.StatusNotFound, "listNotFound", nil)
 		}
 
-		if errors.Is(err, wishlister.WishListInvalidAdminIdError{}) {
+		if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
 			return c.Render(http.StatusForbidden, "listAccessDenied", list)
 		}
 
 		return err
 	}
 
-	var dataJson []byte
+	var dataJSON []byte
 
 	if c.Request().Method == http.MethodPost {
 		form, ok, err := validateEditForm(c)
@@ -68,13 +71,13 @@ func editList(c echo.Context, app wishlister.App) error {
 			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/%s/%s", listID, adminID))
 		}
 
-		dataJson, err = json.Marshal(form.Elements)
+		dataJSON, err = json.Marshal(form.Elements)
 		if err != nil {
 			return err
 		}
 	} else {
 		form := listToEditForm(list)
-		dataJson, err = json.Marshal(form.Elements)
+		dataJSON, err = json.Marshal(form.Elements)
 		if err != nil {
 			return err
 		}
@@ -82,7 +85,7 @@ func editList(c echo.Context, app wishlister.App) error {
 
 	params := listEditTmplParams{
 		Name: list.Name,
-		Data: string(dataJson),
+		Data: string(dataJSON),
 	}
 
 	return c.Render(http.StatusOK, "listEdit", params)
@@ -104,7 +107,7 @@ func validateEditForm(c echo.Context) (editListForm, bool, error) {
 
 	for i := range nameValues {
 		element := editListFormElement{
-			Id:          uuid.NewString(),
+			ID:          uuid.NewString(),
 			Name:        nameValues[i],
 			Description: descriptionValues[i],
 			URL:         urlValues[i],
@@ -121,7 +124,7 @@ func validateEditForm(c echo.Context) (editListForm, bool, error) {
 	return form, ok, nil
 }
 
-func updateList(c echo.Context, app wishlister.App, form editListForm, listId string, adminId string) error {
+func updateList(c echo.Context, app wishlister.App, form editListForm, listID string, adminID string) error {
 	elements := make([]wishlister.WishListElement, len(form.Elements))
 
 	for idx, elt := range form.Elements {
@@ -132,7 +135,7 @@ func updateList(c echo.Context, app wishlister.App, form editListForm, listId st
 		}
 	}
 
-	return app.UpdateListElements(c.Request().Context(), listId, adminId, elements)
+	return app.UpdateListElements(c.Request().Context(), listID, adminID, elements)
 }
 
 func listToEditForm(list wishlister.WishList) editListForm {
@@ -140,7 +143,7 @@ func listToEditForm(list wishlister.WishList) editListForm {
 	for idx, element := range list.Elements {
 		id, _ := nanoid.New()
 		form.Elements[idx] = editListFormElement{
-			Id:          id,
+			ID:          id,
 			Name:        element.Name,
 			Description: element.Description,
 			URL:         element.URL,
