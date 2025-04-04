@@ -1,0 +1,44 @@
+{{ define "content" }}
+<h2>Éditer la liste de vœux "{{ .Name }}"</h2>
+
+<form method="POST" x-data='{ data: {{ .Data }} }'>
+    <template x-for="(obj, index) in data">
+        <fieldset>
+            <template x-if="data[index]['name_error']" >
+                <label>
+                    Nom
+                    <input type="text" name="name" x-model="data[index]['name']" aria-invalid="true" aria-describedby="invalid-helper" />
+                    <small  id="invalid-helper" x-text="data[index]['name_error']"></small>
+                </label>
+            </template>
+            <template x-if="!data[index]['name_error']" >
+                <label>
+                    Nom
+                    <input type="text" name="name" x-model="data[index]['name']" />
+                </label>
+            </template>
+            </label>
+            <label>
+                Description (optionnel)
+                <input type="text" name="description" x-model="data[index]['description']"/>
+            </label>
+            <label>
+                Lien vers l'article (optionnel)
+                <input type="text" name="url" x-model="data[index]['url']"/>
+            </label>
+            <button
+                @click="data.splice(index, 1)"
+                type="button"
+            >Supprimer</button>
+            <hr />
+        </fieldset>
+    </template>
+
+    <button
+        @click="data.push({ 'id': crypto.randomUUID(), 'name': '', 'description': '', 'url': ''})"
+        type="button"
+    >Ajouter un nouvel élément</button>
+
+    <input type="submit" value="Enregistrer" />
+</form>
+{{ end }}

@@ -1,0 +1,23 @@
+{{ define "content" }}
+<h2>
+    {{ .Name }}
+    {{ if .AdminID }} (<a href="/{{ .ID }}/{{ .AdminID }}/edit">éditer</a>){{ end }}
+</h2>
+
+{{ if .AdminID }}
+    <article>
+        <div>Lien à partager : <a href="https://malistedevoeux.fr/{{ .ID }}">https://malistedevoeux.fr/{{ .ID }}</a></div>
+        <div>Lien d'aministration : <a href="https://malistedevoeux.fr/{{ .ID }}/{{ .AdminID }}">https://malistedevoeux.fr/{{ .ID }}/{{ .AdminID }}</a></div>
+    </article>
+{{ end }}
+
+<ul>
+    {{ range .Elements }}
+        <li>
+            {{ .Name }}
+            {{ if .Description }} : {{ .Description }}{{ end }}
+            {{ if .URL }} (<a href='{{ .URL }}'>lien</a>){{ end }}
+        </li>
+    {{ end }}
+</ul>
+{{ end }}
