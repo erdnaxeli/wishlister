@@ -1,3 +1,4 @@
+// Implements a web server that expose a web app to manage wishlists.
 package main
 
 import (

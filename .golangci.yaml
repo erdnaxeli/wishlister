@@ -8,3 +8,4 @@ linters:
     - errname
     - exhaustive
     - exptostd
+    - revive

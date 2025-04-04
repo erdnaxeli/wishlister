@@ -1,3 +1,4 @@
+// Package wishlister implements a wishlists manager.
 package wishlister
 
 import (
@@ -7,13 +8,17 @@ import (
 
 	"github.com/erdnaxeli/wishlister/pkg/repository"
 	nanoid "github.com/matoous/go-nanoid/v2"
+
+	// register sqlite driver
 	_ "modernc.org/sqlite"
 )
 
+// CreateWishlistParams represents the parameters to create a new wishlist.
 type CreateWishlistParams struct {
 	Name string
 }
 
+// WishList represents a wishlist.
 type WishList struct {
 	ID string
 
@@ -23,12 +28,16 @@ type WishList struct {
 	Elements []WishListElement
 }
 
+// WishListElement represents a wishlist element.
 type WishListElement struct {
 	Name        string
 	Description string
 	URL         string
 }
 
+// App is the main interface of this package.
+//
+// It implements all method to manage wishlists.
 type App interface {
 	// Create a new group.
 	//
@@ -39,14 +48,14 @@ type App interface {
 	//
 	// Return the wish list id.
 	CreateWishList(ctx context.Context, params CreateWishlistParams) (string, string, error)
-	GetGroup(ctx context.Context, groupId string)
+	GetGroup(ctx context.Context, groupID string)
 
 	// Get a wishlist.
 	//
 	// The AdminId field on the returned Wishlist object will be empty.
 	//
 	// If the wishlist is not found, an error WishListNotFoundError is returned.
-	GetWishList(ctx context.Context, listId string) (WishList, error)
+	GetWishList(ctx context.Context, listID string) (WishList, error)
 
 	// Get a wishlist to be edited.
 	//
@@ -54,9 +63,9 @@ type App interface {
 	//
 	// If the wishlist is not found, an error WishListNotFoundError is returned.
 	// If the adminId token is incorrect, an error WishListInvalidAdminIdError is returned.
-	GetEditableWishList(ctx context.Context, listId string, adminId string) (WishList, error)
+	GetEditableWishList(ctx context.Context, listID string, adminID string) (WishList, error)
 
-	UpdateListElements(ctx context.Context, listId string, adminId string, elements []WishListElement) error
+	UpdateListElements(ctx context.Context, listID string, adminID string, elements []WishListElement) error
 }
 
 type app struct {
@@ -64,10 +73,14 @@ type app struct {
 	queries *repository.Queries
 }
 
+// New returns an App object with the default config.
 func New() (App, error) {
 	return NewWithConfig("db.sqlite")
 }
 
+// NewWithConfig returns an App object with a specific config.
+//
+// dbFile is the path to the sqlite db file.
 func NewWithConfig(dbFile string) (App, error) {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
@@ -80,31 +93,31 @@ func NewWithConfig(dbFile string) (App, error) {
 	}, nil
 }
 
-func (a *app) CreateGroup(ctx context.Context) string {
-	groupId, _ := nanoid.New()
-	return groupId
+func (a *app) CreateGroup(_ context.Context) string {
+	groupID, _ := nanoid.New()
+	return groupID
 }
 
 func (a *app) CreateWishList(ctx context.Context, params CreateWishlistParams) (string, string, error) {
-	listId, _ := nanoid.New()
-	adminId, _ := nanoid.New()
+	listID, _ := nanoid.New()
+	adminID, _ := nanoid.New()
 
 	err := a.queries.CreateWishList(ctx, repository.CreateWishListParams{
-		ID:      listId,
-		AdminID: adminId,
+		ID:      listID,
+		AdminID: adminID,
 		Name:    params.Name,
 	})
 	if err != nil {
 		return "", "", err
 	}
 
-	return listId, adminId, nil
+	return listID, adminID, nil
 }
 
-func (a *app) GetGroup(ctx context.Context, groupId string) {}
+func (a *app) GetGroup(_ context.Context, _ string) {}
 
-func (a *app) GetWishList(ctx context.Context, listId string) (WishList, error) {
-	list, err := a.queries.GetWishList(ctx, listId)
+func (a *app) GetWishList(ctx context.Context, listID string) (WishList, error) {
+	list, err := a.queries.GetWishList(ctx, listID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return WishList{}, WishListNotFoundError{}
@@ -125,8 +138,8 @@ func (a *app) GetWishList(ctx context.Context, listId string) (WishList, error) 
 	return wishList, nil
 }
 
-func (a *app) GetEditableWishList(ctx context.Context, listId string, adminId string) (WishList, error) {
-	list, err := a.checkListEditAccess(ctx, listId, adminId)
+func (a *app) GetEditableWishList(ctx context.Context, listID string, adminID string) (WishList, error) {
+	list, err := a.checkListEditAccess(ctx, listID, adminID)
 	if err != nil {
 		return WishList{}, err
 	}
@@ -139,8 +152,8 @@ func (a *app) GetEditableWishList(ctx context.Context, listId string, adminId st
 	return list, nil
 }
 
-func (a *app) UpdateListElements(ctx context.Context, listId string, adminId string, elements []WishListElement) (err error) {
-	_, err = a.checkListEditAccess(ctx, listId, adminId)
+func (a *app) UpdateListElements(ctx context.Context, listID string, adminID string, elements []WishListElement) (err error) {
+	_, err = a.checkListEditAccess(ctx, listID, adminID)
 	if err != nil {
 		return err
 	}
@@ -150,24 +163,24 @@ func (a *app) UpdateListElements(ctx context.Context, listId string, adminId str
 		return err
 	}
 	defer func() {
-		if tmpErr := tx.Rollback(); tmpErr != nil {
-			err = tmpErr
+		if err != nil {
+			_ = tx.Rollback()
 		}
 	}()
 
 	qtx := a.queries.WithTx(tx)
-	err = qtx.DeleteWishListElements(ctx, listId)
+	err = qtx.DeleteWishListElements(ctx, listID)
 	if err != nil {
 		return err
 	}
 
 	for _, element := range elements {
-		elementId, _ := nanoid.New()
+		elementID, _ := nanoid.New()
 		err = qtx.InsertWishListElement(
 			ctx,
 			repository.InsertWishListElementParams{
-				ID:          elementId,
-				WishlistID:  listId,
+				ID:          elementID,
+				WishlistID:  listID,
 				Name:        element.Name,
 				Description: NewNullString(element.Description),
 				Url:         NewNullString(element.URL),
@@ -186,8 +199,8 @@ func (a *app) UpdateListElements(ctx context.Context, listId string, adminId str
 	return nil
 }
 
-func (a *app) checkListEditAccess(ctx context.Context, listId string, adminId string) (WishList, error) {
-	list, err := a.queries.GetWishList(ctx, listId)
+func (a *app) checkListEditAccess(ctx context.Context, listID string, adminID string) (WishList, error) {
+	list, err := a.queries.GetWishList(ctx, listID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return WishList{}, WishListNotFoundError{}
@@ -195,8 +208,8 @@ func (a *app) checkListEditAccess(ctx context.Context, listId string, adminId st
 		return WishList{}, err
 	}
 
-	if list.AdminID != adminId {
-		return WishList{}, WishListInvalidAdminIdError{}
+	if list.AdminID != adminID {
+		return WishList{}, WishListInvalidAdminIDError{}
 	}
 
 	return WishList{
@@ -226,6 +239,10 @@ func (a *app) populateElements(ctx context.Context, list *WishList) error {
 	return nil
 }
 
+// NewNullString convert a string value to a sql.NullString value.
+//
+// If the string is empty, the NullString is invalid, else it is valid and contains
+// the string value.
 func NewNullString(s string) sql.NullString {
 	if len(s) == 0 {
 		return sql.NullString{}
