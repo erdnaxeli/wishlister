@@ -8,4 +8,5 @@ linters:
     - errname
     - exhaustive
     - exptostd
+    - gocritic
     - revive
