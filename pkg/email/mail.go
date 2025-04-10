@@ -32,7 +32,7 @@ func NewSMTPSender(username string, password string, server string, port int, fr
 		h: hermes.Hermes{
 			Product: hermes.Product{
 				Name:        "Ma liste de vœux .fr",
-				Link:        "https://www.malistdevœux.fr/",
+				Link:        "https://www.malistdevoeux.fr/",
 				Copyright:   " ",
 				TroubleText: "Si le bouton {ACTION} ne marche pas, copier l'URL suivante dans votre navigateur.",
 			},
@@ -78,14 +78,14 @@ func (s smtpSender) getNewWishListMailBody(
 			Intros: []string{
 				"Votre liste de vœux a bien été créé !",
 				"Voici le lien à partager :",
-				fmt.Sprintf("https://www.malistedevœux.fr/%s", listID),
+				fmt.Sprintf("https://www.malistedevoeux.fr/%s", listID),
 			},
 			Actions: []hermes.Action{
 				{
 					Button: hermes.Button{
 						Text: "Éditer la liste",
 						Link: fmt.Sprintf(
-							"https://www.malistedevœux.fr/%s/%s/edit",
+							"https://www.malistedevoeux.fr/%s/%s/edit",
 							listID,
 							adminID,
 						),
