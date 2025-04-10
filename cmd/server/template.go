@@ -1,12 +1,16 @@
 package main
 
 import (
+	"embed"
 	"errors"
 	"html/template"
 	"io"
 
 	"github.com/labstack/echo/v4"
 )
+
+//go:embed templates
+var templates embed.FS
 
 // Template store all the availables templates.
 //
@@ -55,7 +59,7 @@ func (t *Template) Render(wr io.Writer, name string, data any, _ echo.Context) e
 }
 
 func loadTemplates(e *echo.Echo) {
-	baseTmpl := template.Must(template.ParseFiles("templates/base.html"))
+	baseTmpl := template.Must(template.ParseFS(templates, "templates/base.html"))
 
 	e.Renderer = &Template{
 		listAccessDenied: loadTemplate(baseTmpl, "templates/listAccessDenied.html"),
@@ -68,5 +72,5 @@ func loadTemplates(e *echo.Echo) {
 }
 
 func loadTemplate(baseTmpl *template.Template, filename string) *template.Template {
-	return template.Must(template.Must(baseTmpl.Clone()).ParseFiles(filename))
+	return template.Must(template.Must(baseTmpl.Clone()).ParseFS(templates, filename))
 }
