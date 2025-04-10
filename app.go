@@ -5,7 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
+	"github.com/erdnaxeli/wishlister/pkg/email"
 	"github.com/erdnaxeli/wishlister/pkg/repository"
 	nanoid "github.com/matoous/go-nanoid/v2"
 
@@ -15,7 +17,9 @@ import (
 
 // CreateWishlistParams represents the parameters to create a new wishlist.
 type CreateWishlistParams struct {
-	Name string
+	Name      string
+	Username  string
+	UserEmail string
 }
 
 // WishList represents a wishlist.
@@ -76,17 +80,19 @@ type App interface {
 type app struct {
 	db      *sql.DB
 	queries *repository.Queries
+
+	emailSender email.Sender
 }
 
 // New returns an App object with the default config.
-func New() (App, error) {
-	return NewWithConfig("db.sqlite")
+func New(emailSender email.Sender) (App, error) {
+	return NewWithConfig("db.sqlite", emailSender)
 }
 
 // NewWithConfig returns an App object with a specific config.
 //
 // dbFile is the path to the sqlite db file.
-func NewWithConfig(dbFile string) (App, error) {
+func NewWithConfig(dbFile string, emailSender email.Sender) (App, error) {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
 		return nil, err
@@ -95,6 +101,8 @@ func NewWithConfig(dbFile string) (App, error) {
 	return &app{
 		db:      db,
 		queries: repository.New(db),
+
+		emailSender: emailSender,
 	}, nil
 }
 
@@ -117,6 +125,11 @@ func (a *app) CreateWishList(
 	})
 	if err != nil {
 		return "", "", err
+	}
+
+	err = a.emailSender.SendNewWishListEmail(params.UserEmail, params.Username, listID, adminID)
+	if err != nil {
+		log.Print(err)
 	}
 
 	return listID, adminID, nil
