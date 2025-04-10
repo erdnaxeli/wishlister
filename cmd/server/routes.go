@@ -41,7 +41,11 @@ func setRoutes(e *echo.Echo, app wishlister.App) {
 func createNewWishList(c echo.Context, app wishlister.App) error {
 	listID, adminID, err := app.CreateWishList(
 		c.Request().Context(),
-		wishlister.CreateWishlistParams{Name: c.FormValue("name")},
+		wishlister.CreateWishlistParams{
+			Name:      c.FormValue("name"),
+			Username:  c.FormValue("user"),
+			UserEmail: c.FormValue("email"),
+		},
 	)
 	if err != nil {
 		return err
