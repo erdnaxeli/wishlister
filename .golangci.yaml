@@ -10,3 +10,6 @@ linters:
     - exptostd
     - gocritic
     - revive
+foramtters:
+  enable:
+    - gofumpt
