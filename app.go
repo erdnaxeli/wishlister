@@ -65,7 +65,12 @@ type App interface {
 	// If the adminId token is incorrect, an error WishListInvalidAdminIdError is returned.
 	GetEditableWishList(ctx context.Context, listID string, adminID string) (WishList, error)
 
-	UpdateListElements(ctx context.Context, listID string, adminID string, elements []WishListElement) error
+	UpdateListElements(
+		ctx context.Context,
+		listID string,
+		adminID string,
+		elements []WishListElement,
+	) error
 }
 
 type app struct {
@@ -98,7 +103,10 @@ func (a *app) CreateGroup(_ context.Context) string {
 	return groupID
 }
 
-func (a *app) CreateWishList(ctx context.Context, params CreateWishlistParams) (string, string, error) {
+func (a *app) CreateWishList(
+	ctx context.Context,
+	params CreateWishlistParams,
+) (string, string, error) {
 	listID, _ := nanoid.New()
 	adminID, _ := nanoid.New()
 
@@ -138,7 +146,11 @@ func (a *app) GetWishList(ctx context.Context, listID string) (WishList, error) 
 	return wishList, nil
 }
 
-func (a *app) GetEditableWishList(ctx context.Context, listID string, adminID string) (WishList, error) {
+func (a *app) GetEditableWishList(
+	ctx context.Context,
+	listID string,
+	adminID string,
+) (WishList, error) {
 	list, err := a.checkListEditAccess(ctx, listID, adminID)
 	if err != nil {
 		return WishList{}, err
@@ -152,7 +164,12 @@ func (a *app) GetEditableWishList(ctx context.Context, listID string, adminID st
 	return list, nil
 }
 
-func (a *app) UpdateListElements(ctx context.Context, listID string, adminID string, elements []WishListElement) (err error) {
+func (a *app) UpdateListElements(
+	ctx context.Context,
+	listID string,
+	adminID string,
+	elements []WishListElement,
+) (err error) {
 	_, err = a.checkListEditAccess(ctx, listID, adminID)
 	if err != nil {
 		return err
@@ -199,7 +216,11 @@ func (a *app) UpdateListElements(ctx context.Context, listID string, adminID str
 	return nil
 }
 
-func (a *app) checkListEditAccess(ctx context.Context, listID string, adminID string) (WishList, error) {
+func (a *app) checkListEditAccess(
+	ctx context.Context,
+	listID string,
+	adminID string,
+) (WishList, error) {
 	list, err := a.queries.GetWishList(ctx, listID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

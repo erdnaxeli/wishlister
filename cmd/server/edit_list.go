@@ -124,7 +124,13 @@ func validateEditForm(c echo.Context) (editListForm, bool, error) {
 	return form, ok, nil
 }
 
-func updateList(c echo.Context, app wishlister.App, form editListForm, listID string, adminID string) error {
+func updateList(
+	c echo.Context,
+	app wishlister.App,
+	form editListForm,
+	listID string,
+	adminID string,
+) error {
 	elements := make([]wishlister.WishListElement, len(form.Elements))
 
 	for idx, elt := range form.Elements {

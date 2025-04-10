@@ -12,7 +12,9 @@ import (
 func main() {
 	e := echo.New()
 	e.Debug = true
-	e.Pre(middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}))
+	e.Pre(
+		middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}),
+	)
 
 	app, err := wishlister.New()
 	if err != nil {
