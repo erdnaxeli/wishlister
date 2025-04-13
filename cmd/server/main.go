@@ -38,7 +38,7 @@ func main() {
 
 	app, err := wishlister.New(mailSender)
 	if err != nil {
-		log.Fatal(err)
+		e.Logger.Fatal(err)
 	}
 
 	setRoutes(e, app)
