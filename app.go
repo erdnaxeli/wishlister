@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/erdnaxeli/wishlister/pkg/email"
@@ -95,7 +96,12 @@ func New(emailSender email.Sender) (App, error) {
 func NewWithConfig(dbFile string, emailSender email.Sender) (App, error) {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error while opening database: %w", err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("Error while pinging database: %w", err)
 	}
 
 	return &app{

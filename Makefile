@@ -18,3 +18,14 @@ run:
 style:
 	go tool golangci-lint fmt ./...
 	go tool golangci-lint run ./...
+
+# Release artifact
+
+build-docker-image:
+ifndef VERSION
+	$(error The variable VERSION must be defined)
+endif
+	docker build -t ghcr.io/erdnaxeli/wishlister:${VERSION} .
+
+publish: build-docker-image
+	docker push ghcr.io/erdnaxeli/wishlister:${VERSION}
