@@ -21,6 +21,8 @@ type CreateWishlistParams struct {
 	Name      string
 	Username  string
 	UserEmail string
+
+	GroupName string
 }
 
 // WishList represents a wishlist.
@@ -29,6 +31,7 @@ type WishList struct {
 
 	Name    string
 	AdminID string
+	GroupID string
 
 	Elements []WishListElement
 }
@@ -120,15 +123,45 @@ func (a *app) CreateGroup(_ context.Context) string {
 func (a *app) CreateWishList(
 	ctx context.Context,
 	params CreateWishlistParams,
-) (string, string, error) {
-	listID, _ := nanoid.New()
-	adminID, _ := nanoid.New()
+) (listID string, adminID string, err error) {
+	listID, _ = nanoid.New()
+	adminID, _ = nanoid.New()
 
-	err := a.queries.CreateWishList(ctx, repository.CreateWishListParams{
+	tx, err := a.db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", "", err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	qtx := a.queries.WithTx(tx)
+
+	var groupID string
+	if params.GroupName != "" {
+		groupID, _ = nanoid.New()
+		err = qtx.CreateGroup(ctx, repository.CreateGroupParams{
+			ID:   groupID,
+			Name: params.GroupName,
+		})
+		if err != nil {
+			return "", "", nil
+		}
+	}
+
+	err = qtx.CreateWishList(ctx, repository.CreateWishListParams{
 		ID:      listID,
 		AdminID: adminID,
 		Name:    params.Name,
+		GroupID: NewNullString(groupID),
 	})
+	if err != nil {
+		return "", "", err
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return "", "", err
 	}
@@ -147,14 +180,15 @@ func (a *app) GetWishList(ctx context.Context, listID string) (WishList, error) 
 	list, err := a.queries.GetWishList(ctx, listID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return WishList{}, WishListNotFoundError{}
+			return WishList{}, err
 		}
 		return WishList{}, err
 	}
 
 	wishList := WishList{
-		ID:   list.ID,
-		Name: list.Name,
+		ID:      list.ID,
+		Name:    list.Name,
+		GroupID: list.GroupID.String,
 	}
 
 	err = a.populateElements(ctx, &wishList)
@@ -255,6 +289,7 @@ func (a *app) checkListEditAccess(
 	return WishList{
 		ID:      list.ID,
 		AdminID: list.AdminID,
+		GroupID: list.GroupID.String,
 		Name:    list.Name,
 	}, nil
 }

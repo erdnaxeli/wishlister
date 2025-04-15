@@ -4,6 +4,10 @@
     {{ if .AdminID }} (<a href="/{{ .ID }}/{{ .AdminID }}/edit">éditer</a>){{ end }}
 </h2>
 
+{{ if .GroupID }}
+  Cette liste fait partie d'un <a href="https://www.malistedevoeux.fr/g/{{ .GroupID }}">groupe</a>.
+{{ end }}
+
 {{ if .AdminID }}
     <article>
         <div>Lien à partager : <a href="https://malistedevoeux.fr/{{ .ID }}">https://malistedevoeux.fr/{{ .ID }}</a></div>
