@@ -7,14 +7,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createWishList = `-- name: CreateWishList :exec
 insert into wishlists (
-    id, admin_id, name
+    id, admin_id, name, group_id
 )
 values (
-    ?, ?, ?
+    ?, ?, ?, ?
 )
 `
 
@@ -22,9 +23,15 @@ type CreateWishListParams struct {
 	ID      string
 	AdminID string
 	Name    string
+	GroupID sql.NullString
 }
 
 func (q *Queries) CreateWishList(ctx context.Context, arg CreateWishListParams) error {
-	_, err := q.db.ExecContext(ctx, createWishList, arg.ID, arg.AdminID, arg.Name)
+	_, err := q.db.ExecContext(ctx, createWishList,
+		arg.ID,
+		arg.AdminID,
+		arg.Name,
+		arg.GroupID,
+	)
 	return err
 }

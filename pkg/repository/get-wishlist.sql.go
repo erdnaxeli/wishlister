@@ -7,12 +7,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 )
 
 const getWishList = `-- name: GetWishList :one
 select
     id,
     admin_id,
+    group_id,
     name
 from wishlists
 where id = ?
@@ -21,12 +23,18 @@ where id = ?
 type GetWishListRow struct {
 	ID      string
 	AdminID string
+	GroupID sql.NullString
 	Name    string
 }
 
 func (q *Queries) GetWishList(ctx context.Context, id string) (GetWishListRow, error) {
 	row := q.db.QueryRowContext(ctx, getWishList, id)
 	var i GetWishListRow
-	err := row.Scan(&i.ID, &i.AdminID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.AdminID,
+		&i.GroupID,
+		&i.Name,
+	)
 	return i, err
 }

@@ -1,8 +1,14 @@
+create table groups (
+    id varchar(21) primary key not null,
+    name varchar(255) not null
+);
+
 create table wishlists (
     id varchar(21) primary key not null,
     admin_id varchar(21) not null,
     user_id varchar(21) references users (id),
-    name varchar(255) not null
+    name varchar(255) not null,
+    group_id varchar(21) references groups (id)
 );
 
 create table wishlist_elements (

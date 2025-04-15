@@ -39,13 +39,19 @@ func setRoutes(e *echo.Echo, app wishlister.App) {
 }
 
 func createNewWishList(c echo.Context, app wishlister.App) error {
+	params := wishlister.CreateWishlistParams{
+		Name:      c.FormValue("name"),
+		Username:  c.FormValue("user"),
+		UserEmail: c.FormValue("email"),
+	}
+
+	if c.FormValue("group") == "on" {
+		params.GroupName = c.FormValue("groupname")
+	}
+
 	listID, adminID, err := app.CreateWishList(
 		c.Request().Context(),
-		wishlister.CreateWishlistParams{
-			Name:      c.FormValue("name"),
-			Username:  c.FormValue("user"),
-			UserEmail: c.FormValue("email"),
-		},
+		params,
 	)
 	if err != nil {
 		return err
@@ -61,18 +67,18 @@ func getWishList(c echo.Context, app wishlister.App) error {
 	var list wishlister.WishList
 	var err error
 
-	if adminID != "" {
+	if adminID == "" {
+		list, err = app.GetWishList(c.Request().Context(), listID)
+		if err != nil {
+			return err
+		}
+	} else {
 		list, err = app.GetEditableWishList(c.Request().Context(), listID, adminID)
 		if err != nil {
 			if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
 				return c.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/%s", listID))
 			}
 
-			return err
-		}
-	} else {
-		list, err = app.GetWishList(c.Request().Context(), listID)
-		if err != nil {
 			return err
 		}
 	}
