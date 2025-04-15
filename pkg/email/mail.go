@@ -16,6 +16,14 @@ type Sender interface {
 	SendNewWishListEmail(to string, username string, listID string, adminID string) error
 }
 
+// NoMailer does not send any email.
+type NoMailer struct{}
+
+// SendNewWishListEmail actually does not send any email.
+func (n NoMailer) SendNewWishListEmail(_ string, _ string, _ string, _ string) error {
+	return nil
+}
+
 type smtpSender struct {
 	dialer *gomail.Dialer
 	from   string
