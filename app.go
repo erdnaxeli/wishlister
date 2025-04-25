@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"log"
 
+	nanoid "github.com/matoous/go-nanoid/v2"
+
 	"github.com/erdnaxeli/wishlister/pkg/email"
 	"github.com/erdnaxeli/wishlister/pkg/repository"
-	nanoid "github.com/matoous/go-nanoid/v2"
 
 	// register sqlite driver
 	_ "modernc.org/sqlite"
