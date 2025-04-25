@@ -1,3 +1,4 @@
+{{/* base: base.html */}}
 {{ define "content" }}
 <div x-data="{ group: false }">
   <h2 x-show="!group">Créer une liste de vœux</h2>
@@ -17,7 +18,6 @@
         <input type="text" name="email" id="email" />
       </label>
 
-      <!--
       <label>
         Créer un groupe
         <input type="checkbox" name="group" id="group" x-model="group" />
@@ -26,7 +26,11 @@
         Cochez cette case si vous voulez créer un groupe dans lequel tous les partipipants pourront créer leur liste de vœux et voir celle des autres.
         Ne la cochez pas si vous voulez créer une seule liste de vœux pour vous-même.
       </small>
-    -->
+
+      <label x-show="group">
+        Nom du groupe
+        <input type="text" name="groupname" id="groupname" />
+      </label>
     </fieldset>
 
     <input type="submit" value="Créer" />  

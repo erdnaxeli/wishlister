@@ -1,13 +1,18 @@
+{{/* base: base.html */}}
 {{ define "content" }}
 <h2>
     {{ .Name }}
-    {{ if .AdminID }} (<a href="/{{ .ID }}/{{ .AdminID }}/edit">éditer</a>){{ end }}
+    {{ if .AdminID }} (<a href="/l/{{ .ID }}/{{ .AdminID }}/edit">éditer</a>){{ end }}
 </h2>
+
+{{ if .GroupID }}
+  Cette liste fait partie d'un <a href="https://www.malistedevoeux.fr/g/{{ .GroupID }}">groupe</a>.
+{{ end }}
 
 {{ if .AdminID }}
     <article>
-        <div>Lien à partager : <a href="https://malistedevoeux.fr/{{ .ID }}">https://malistedevoeux.fr/{{ .ID }}</a></div>
-        <div>Lien d'aministration : <a href="https://malistedevoeux.fr/{{ .ID }}/{{ .AdminID }}">https://malistedevoeux.fr/{{ .ID }}/{{ .AdminID }}</a></div>
+        <div>Lien à partager : <a href="https://malistedevoeux.fr/l/{{ .ID }}">https://malistedevoeux.fr/l/{{ .ID }}</a></div>
+        <div>Lien d'aministration : <a href="https://malistedevoeux.fr/l/{{ .ID }}/{{ .AdminID }}">https://malistedevoeux.fr/l/{{ .ID }}/{{ .AdminID }}</a></div>
     </article>
 {{ end }}
 

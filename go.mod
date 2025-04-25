@@ -10,10 +10,12 @@ tool (
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/dave/jennifer v1.7.1
 	github.com/go-hermes/hermes/v2 v2.4.0
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/matoous/go-nanoid/v2 v2.1.0
+	golang.org/x/text v0.24.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	modernc.org/sqlite v1.37.0
 )
@@ -259,7 +261,6 @@ require (
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect

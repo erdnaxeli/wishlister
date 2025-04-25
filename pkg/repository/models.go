@@ -8,6 +8,11 @@ import (
 	"database/sql"
 )
 
+type Group struct {
+	ID   string
+	Name string
+}
+
 type User struct {
 	ID    string
 	Name  string
@@ -19,6 +24,7 @@ type Wishlist struct {
 	AdminID string
 	UserID  sql.NullString
 	Name    string
+	GroupID sql.NullString
 }
 
 type WishlistElement struct {
