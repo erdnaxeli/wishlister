@@ -1,0 +1,24 @@
+{{/* base: base.html */}}
+{{ define "content" }}
+<div>
+  <h2>Créer un groupe</h2>
+  <form method="POST">
+    <fieldset>
+      <label>
+        Nom du groupe
+        <input type="text" name="name" id="name" />
+      </label>
+      <label>
+        Nom d'utilisateur
+        <input type="text" name="user" id="user" />
+      </label>
+      <label>
+        Addresse email. Cela permet de recevoir le lien d'administration du groupe par email et de le retrouver si vous l'avez perdue.
+        <input type="text" name="email" id="email" />
+      </label>
+    </fieldset>
+
+    <input type="submit" value="Créer" />  
+  </form>
+</div>
+{{ end }}

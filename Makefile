@@ -1,3 +1,6 @@
+export EMAIL ?= off
+
+
 all: build-server build-frontend
 
 build-server: generate-repository generate-templates
