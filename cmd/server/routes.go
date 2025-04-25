@@ -21,8 +21,6 @@ func setRoutes(e *echo.Echo, app wishlister.App, templates Templates) {
 		return createNewGroup(c, app)
 	})
 
-	e.POST("/group/new", renderOKFunc(templates.RenderNewGroupBytes, nil))
-
 	e.GET("/l/:listID", func(c echo.Context) error {
 		return getWishList(c, app, templates)
 	})
@@ -49,10 +47,6 @@ func createNewWishList(c echo.Context, app wishlister.App) error {
 		UserEmail: c.FormValue("email"),
 	}
 
-	if c.FormValue("group") == "on" {
-		params.GroupName = c.FormValue("groupname")
-	}
-
 	listID, adminID, err := app.CreateWishList(
 		c.Request().Context(),
 		params,
@@ -61,11 +55,7 @@ func createNewWishList(c echo.Context, app wishlister.App) error {
 		return err
 	}
 
-	return c.Redirect(303, fmt.Sprintf("l/%s/%s", listID, adminID))
-}
-
-func createNewGroup(_ echo.Context, _ wishlister.App) error {
-	return nil
+	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("l/%s/%s", listID, adminID))
 }
 
 func getWishList(c echo.Context, app wishlister.App, templates Templates) error {

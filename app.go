@@ -21,8 +21,12 @@ type CreateWishlistParams struct {
 	Name      string
 	Username  string
 	UserEmail string
+}
 
-	GroupName string
+// CreateGroupParams represents the parameters to create a new group.
+type CreateGroupParams struct {
+	Name      string
+	UserEmail string
 }
 
 // WishList represents a wishlist.
@@ -50,7 +54,7 @@ type App interface {
 	// Create a new group.
 	//
 	// Return the group id.
-	CreateGroup(ctx context.Context) string
+	CreateGroup(ctx context.Context, params CreateGroupParams) (string, error)
 
 	// Create a new wish list.
 	//
@@ -115,9 +119,21 @@ func NewWithConfig(dbFile string, emailSender email.Sender) (App, error) {
 	}, nil
 }
 
-func (a *app) CreateGroup(_ context.Context) string {
+func (a *app) CreateGroup(ctx context.Context, params CreateGroupParams) (string, error) {
 	groupID, _ := nanoid.New()
-	return groupID
+
+	err := a.queries.CreateGroup(
+		ctx,
+		repository.CreateGroupParams{
+			ID:   groupID,
+			Name: params.Name,
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return groupID, nil
 }
 
 func (a *app) CreateWishList(
@@ -139,23 +155,10 @@ func (a *app) CreateWishList(
 
 	qtx := a.queries.WithTx(tx)
 
-	var groupID string
-	if params.GroupName != "" {
-		groupID, _ = nanoid.New()
-		err = qtx.CreateGroup(ctx, repository.CreateGroupParams{
-			ID:   groupID,
-			Name: params.GroupName,
-		})
-		if err != nil {
-			return "", "", nil
-		}
-	}
-
 	err = qtx.CreateWishList(ctx, repository.CreateWishListParams{
 		ID:      listID,
 		AdminID: adminID,
 		Name:    params.Name,
-		GroupID: NewNullString(groupID),
 	})
 	if err != nil {
 		return "", "", err
