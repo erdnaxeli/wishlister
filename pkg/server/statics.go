@@ -9,7 +9,7 @@ import (
 //go:embed static
 var statics embed.FS
 
-func setStatics(e *echo.Echo) {
+func (s Server) setStatics() {
 	subFS := echo.MustSubFS(statics, "static/css")
-	e.StaticFS("/css", subFS)
+	s.e.StaticFS("/css", subFS)
 }

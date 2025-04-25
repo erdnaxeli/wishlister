@@ -10,45 +10,31 @@ import (
 	"github.com/erdnaxeli/wishlister"
 )
 
-func setRoutes(e *echo.Echo, app wishlister.App, templates Templates) {
-	e.GET("/", renderOKFunc(templates.RenderIndexBytes, nil))
-	e.GET("/new", renderOKFunc(templates.RenderNewBytes, nil))
-	e.GET("/group/new", renderOKFunc(templates.RenderNewGroupBytes, nil))
+func (s Server) setRoutes() {
+	s.e.GET("/", renderOKFunc(s.templates.RenderIndexBytes, nil))
+	s.e.GET("/new", renderOKFunc(s.templates.RenderNewBytes, nil))
+	s.e.GET("/group/new", renderOKFunc(s.templates.RenderNewGroupBytes, nil))
 
-	e.POST("/new", func(c echo.Context) error {
-		return createNewWishList(c, app)
-	})
-	e.POST("/group/new", func(c echo.Context) error {
-		return createNewGroup(c, app)
-	})
+	s.e.POST("/new", s.createNewWishList)
+	s.e.POST("/group/new", s.createNewGroup)
 
-	e.GET("/l/:listID", func(c echo.Context) error {
-		return getWishList(c, app, templates)
-	})
+	s.e.GET("/l/:listID", s.getWishList)
+	s.e.GET("/l/:listID/:adminID", s.getWishList)
+	s.e.GET("/l/:listID/:adminID/edit", s.editList)
+	s.e.POST("/l/:listID/:adminID/edit", s.editList)
 
-	e.GET("/l/:listID/:adminID", func(c echo.Context) error {
-		return getWishList(c, app, templates)
-	})
-
-	e.GET("/l/:listID/:adminID/edit", func(c echo.Context) error {
-		return editList(c, app, templates)
-	})
-
-	e.POST("/l/:listID/:adminID/edit", func(c echo.Context) error {
-		return editList(c, app, templates)
-	})
-
-	e.GET("/*", renderFunc(http.StatusNotFound, templates.RenderNotFoundErrorBytes, nil))
+	// 404 page
+	s.e.GET("/*", renderFunc(http.StatusNotFound, s.templates.RenderNotFoundErrorBytes, nil))
 }
 
-func createNewWishList(c echo.Context, app wishlister.App) error {
+func (s Server) createNewWishList(c echo.Context) error {
 	params := wishlister.CreateWishlistParams{
 		Name:      c.FormValue("name"),
 		Username:  c.FormValue("user"),
 		UserEmail: c.FormValue("email"),
 	}
 
-	listID, adminID, err := app.CreateWishList(
+	listID, adminID, err := s.wishlister.CreateWishList(
 		c.Request().Context(),
 		params,
 	)
@@ -59,7 +45,7 @@ func createNewWishList(c echo.Context, app wishlister.App) error {
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("l/%s/%s", listID, adminID))
 }
 
-func getWishList(c echo.Context, app wishlister.App, templates Templates) error {
+func (s Server) getWishList(c echo.Context) error {
 	listID := c.Param("listID")
 	adminID := c.Param("adminID")
 
@@ -67,12 +53,12 @@ func getWishList(c echo.Context, app wishlister.App, templates Templates) error 
 	var err error
 
 	if adminID == "" {
-		list, err = app.GetWishList(c.Request().Context(), listID)
+		list, err = s.wishlister.GetWishList(c.Request().Context(), listID)
 		if err != nil {
 			return err
 		}
 	} else {
-		list, err = app.GetEditableWishList(c.Request().Context(), listID, adminID)
+		list, err = s.wishlister.GetEditableWishList(c.Request().Context(), listID, adminID)
 		if err != nil {
 			if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
 				return c.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/%s", listID))
@@ -82,7 +68,7 @@ func getWishList(c echo.Context, app wishlister.App, templates Templates) error 
 		}
 	}
 
-	return renderOK(c, templates.RenderListViewBytes, list)
+	return renderOK(c, s.templates.RenderListViewBytes, list)
 }
 
 func renderOKFunc(templateFunc func(data any) ([]byte, error), data any) func(echo.Context) error {

@@ -15,7 +15,7 @@ type createGroupForm struct {
 	Email string `validate:"required,email,max=255"`
 }
 
-func createNewGroup(c echo.Context, a wishlister.App) error {
+func (s Server) createNewGroup(c echo.Context) error {
 	form := createGroupForm{
 		Name:  c.FormValue("name"),
 		Email: c.FormValue("email"),
@@ -27,7 +27,7 @@ func createNewGroup(c echo.Context, a wishlister.App) error {
 		return err
 	}
 
-	groupID, err := a.CreateGroup(
+	groupID, err := s.wishlister.CreateGroup(
 		c.Request().Context(),
 		wishlister.CreateGroupParams{
 			Name:      form.Name,
