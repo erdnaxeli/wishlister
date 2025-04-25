@@ -4,7 +4,7 @@ export EMAIL ?= off
 all: build-server build-frontend
 
 build-server: generate-repository generate-templates
-	go build ./cmd/server
+	go build -o server ./pkg/cmd
 
 build-frontend: build-css
 
@@ -15,7 +15,7 @@ generate-repository:
 	go tool sqlc generate
 
 generate-templates:
-	go run statictemplates/cmd/main.go cmd/server/templates/ main cmd/server/
+	go run statictemplates/cmd/main.go pkg/server/templates/ server pkg/server/
 
 run:
 	go tool modd

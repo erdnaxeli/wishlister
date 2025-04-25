@@ -5,10 +5,10 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/erdnaxeli/wishlister"
 	"github.com/erdnaxeli/wishlister/pkg/email"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/erdnaxeli/wishlister/pkg/server"
+
+	"github.com/erdnaxeli/wishlister"
 )
 
 type config struct {
@@ -29,14 +29,6 @@ func main() {
 		)
 	}
 
-	templates := NewTemplates()
-
-	e := echo.New()
-	e.Debug = true
-	e.Pre(
-		middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}),
-	)
-
 	var mailSender email.Sender
 	if cfg.Email == "off" {
 		mailSender = email.NoMailer{}
@@ -52,11 +44,8 @@ func main() {
 
 	app, err := wishlister.New(mailSender)
 	if err != nil {
-		e.Logger.Fatal(err)
+		log.Fatal(err)
 	}
 
-	setRoutes(e, app, templates)
-	setStatics(e)
-
-	e.Logger.Fatal(e.Start(":8080"))
+	server.New(server.Config{Wishlister: app}).Run()
 }
