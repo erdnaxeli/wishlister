@@ -30,16 +30,16 @@ func New(config Config) Server {
 		middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}),
 	)
 
-	setRoutes(e, config.Wishlister, templates)
-	setStatics(e)
-
-	server := Server{
+	s := Server{
 		e:          e,
 		templates:  templates,
 		wishlister: config.Wishlister,
 	}
 
-	return server
+	s.setRoutes()
+	s.setStatics()
+
+	return s
 }
 
 // Run starts the server.

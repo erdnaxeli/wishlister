@@ -38,11 +38,11 @@ type editListFormElement struct {
 // HTML form.
 var ErrInvalidForm = errors.New("invalid form")
 
-func editList(c echo.Context, app wishlister.App, templates Templates) error {
+func (s Server) editList(c echo.Context) error {
 	listID := c.Param("listID")
 	adminID := c.Param("adminID")
 
-	list, err := app.GetEditableWishList(c.Request().Context(), listID, adminID)
+	list, err := s.wishlister.GetEditableWishList(c.Request().Context(), listID, adminID)
 	if err != nil {
 		if errors.Is(err, wishlister.WishListNotFoundError{}) {
 			return c.Render(http.StatusNotFound, "listNotFound", nil)
@@ -64,7 +64,7 @@ func editList(c echo.Context, app wishlister.App, templates Templates) error {
 		}
 
 		if ok {
-			err := updateList(c, app, form, listID, adminID)
+			err := s.updateList(c, form, listID, adminID)
 			if err != nil {
 				return err
 			}
@@ -89,7 +89,7 @@ func editList(c echo.Context, app wishlister.App, templates Templates) error {
 		Data: string(dataJSON),
 	}
 
-	return renderOK(c, templates.RenderListEditBytes, params)
+	return renderOK(c, s.templates.RenderListEditBytes, params)
 }
 
 func validateEditForm(c echo.Context) (editListForm, bool, error) {
@@ -125,9 +125,8 @@ func validateEditForm(c echo.Context) (editListForm, bool, error) {
 	return form, ok, nil
 }
 
-func updateList(
+func (s Server) updateList(
 	c echo.Context,
-	app wishlister.App,
 	form editListForm,
 	listID string,
 	adminID string,
@@ -142,7 +141,7 @@ func updateList(
 		}
 	}
 
-	return app.UpdateListElements(c.Request().Context(), listID, adminID, elements)
+	return s.wishlister.UpdateListElements(c.Request().Context(), listID, adminID, elements)
 }
 
 func listToEditForm(list wishlister.WishList) editListForm {
