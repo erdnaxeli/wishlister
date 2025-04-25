@@ -18,11 +18,11 @@ type listEditTmplParams struct {
 	Data string
 }
 
-type editListForm struct {
-	Elements []editListFormElement `json:"elements"`
+type editListData struct {
+	Elements []editListDataElement `json:"elements"`
 }
 
-type editListFormElement struct {
+type editListDataElement struct {
 	ID string `json:"id"`
 
 	Name        string `json:"name"`
@@ -39,10 +39,17 @@ type editListFormElement struct {
 var ErrInvalidForm = errors.New("invalid form")
 
 func (s Server) editList(c echo.Context) error {
-	listID := c.Param("listID")
-	adminID := c.Param("adminID")
+	params := getWishListParam{}
+	err := c.Bind(&params)
+	if err != nil {
+		return err
+	}
 
-	list, err := s.wishlister.GetEditableWishList(c.Request().Context(), listID, adminID)
+	list, err := s.wishlister.GetEditableWishList(
+		c.Request().Context(),
+		params.ListID,
+		params.AdminID,
+	)
 	if err != nil {
 		if errors.Is(err, wishlister.WishListNotFoundError{}) {
 			return c.Render(http.StatusNotFound, "listNotFound", nil)
@@ -55,79 +62,90 @@ func (s Server) editList(c echo.Context) error {
 		return err
 	}
 
-	var dataJSON []byte
+	var data editListData
 
 	if c.Request().Method == http.MethodPost {
-		form, ok, err := validateEditForm(c)
+		var ok bool
+		data, ok, err = s.validateEditForm(c)
 		if err != nil {
-			return c.String(http.StatusBadRequest, "bad request")
+			return err
 		}
 
 		if ok {
-			err := s.updateList(c, form, listID, adminID)
+			err := s.updateList(c, data, params.ListID, params.AdminID)
 			if err != nil {
 				return err
 			}
 
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/%s/%s", listID, adminID))
-		}
-
-		dataJSON, err = json.Marshal(form.Elements)
-		if err != nil {
-			return err
+			return c.Redirect(
+				http.StatusSeeOther,
+				fmt.Sprintf("/l/%s/%s", params.ListID, params.AdminID),
+			)
 		}
 	} else {
-		form := listToEditForm(list)
-		dataJSON, err = json.Marshal(form.Elements)
-		if err != nil {
-			return err
-		}
+		data = listToEditData(list)
 	}
 
-	params := listEditTmplParams{
+	dataJSON, err := json.Marshal(data.Elements)
+	if err != nil {
+		return err
+	}
+
+	tmplParams := listEditTmplParams{
 		Name: list.Name,
 		Data: string(dataJSON),
 	}
 
-	return renderOK(c, s.templates.RenderListEditBytes, params)
+	return renderOK(c, s.templates.RenderListEditBytes, tmplParams)
 }
 
-func validateEditForm(c echo.Context) (editListForm, bool, error) {
-	form := editListForm{}
+type listElementsForm struct {
+	Descriptions []string `form:"description" validate:"required"`
+	Names        []string `form:"name"        validate:"required"`
+	Urls         []string `form:"url"         validate:"required"`
+}
+
+func (s Server) validateEditForm(c echo.Context) (editListData, bool, error) {
+	data := editListData{}
 	ok := true
 
-	values, _ := c.FormParams()
-	nameValues, nameOk := values["name"]
-	descriptionValues, descriptionOk := values["description"]
-	urlValues, urlOk := values["url"]
-
-	if !nameOk || !descriptionOk || !urlOk ||
-		len(nameValues) != len(descriptionValues) || len(nameValues) != len(urlValues) {
-		return form, false, ErrInvalidForm
+	form := listElementsForm{}
+	err := c.Bind(&form)
+	if err != nil {
+		return data, false, err
 	}
 
-	for i := range nameValues {
-		element := editListFormElement{
+	err = s.validate.Struct(form)
+	if err != nil {
+		return data, false, err
+	}
+
+	if len(form.Names) != len(form.Descriptions) || len(form.Names) != len(form.Urls) {
+		return data, false, ErrInvalidForm
+	}
+
+	for i := range form.Names {
+		element := editListDataElement{
 			ID:          uuid.NewString(),
-			Name:        nameValues[i],
-			Description: descriptionValues[i],
-			URL:         urlValues[i],
+			Name:        form.Names[i],
+			Description: form.Descriptions[i],
+			URL:         form.Urls[i],
 		}
 
-		if nameValues[i] == "" {
+		if form.Names[i] == "" {
 			element.NameError = "Le nom ne peut pas être vide."
 			ok = false
 		}
 
-		form.Elements = append(form.Elements, element)
+		data.Elements = append(data.Elements, element)
 	}
 
-	return form, ok, nil
+	return data, ok, nil
 }
 
 func (s Server) updateList(
 	c echo.Context,
-	form editListForm,
+	form editListData,
 	listID string,
 	adminID string,
 ) error {
@@ -144,11 +162,11 @@ func (s Server) updateList(
 	return s.wishlister.UpdateListElements(c.Request().Context(), listID, adminID, elements)
 }
 
-func listToEditForm(list wishlister.WishList) editListForm {
-	form := editListForm{Elements: make([]editListFormElement, len(list.Elements))}
+func listToEditData(list wishlister.WishList) editListData {
+	data := editListData{Elements: make([]editListDataElement, len(list.Elements))}
 	for idx, element := range list.Elements {
 		id, _ := nanoid.New()
-		form.Elements[idx] = editListFormElement{
+		data.Elements[idx] = editListDataElement{
 			ID:          id,
 			Name:        element.Name,
 			Description: element.Description,
@@ -156,5 +174,5 @@ func listToEditForm(list wishlister.WishList) editListForm {
 		}
 	}
 
-	return form
+	return data
 }

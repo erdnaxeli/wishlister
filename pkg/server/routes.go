@@ -1,13 +1,9 @@
 package server
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/erdnaxeli/wishlister"
 )
 
 func (s Server) setRoutes() {
@@ -25,50 +21,6 @@ func (s Server) setRoutes() {
 
 	// 404 page
 	s.e.GET("/*", renderFunc(http.StatusNotFound, s.templates.RenderNotFoundErrorBytes, nil))
-}
-
-func (s Server) createNewWishList(c echo.Context) error {
-	params := wishlister.CreateWishlistParams{
-		Name:      c.FormValue("name"),
-		Username:  c.FormValue("user"),
-		UserEmail: c.FormValue("email"),
-	}
-
-	listID, adminID, err := s.wishlister.CreateWishList(
-		c.Request().Context(),
-		params,
-	)
-	if err != nil {
-		return err
-	}
-
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("l/%s/%s", listID, adminID))
-}
-
-func (s Server) getWishList(c echo.Context) error {
-	listID := c.Param("listID")
-	adminID := c.Param("adminID")
-
-	var list wishlister.WishList
-	var err error
-
-	if adminID == "" {
-		list, err = s.wishlister.GetWishList(c.Request().Context(), listID)
-		if err != nil {
-			return err
-		}
-	} else {
-		list, err = s.wishlister.GetEditableWishList(c.Request().Context(), listID, adminID)
-		if err != nil {
-			if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
-				return c.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/%s", listID))
-			}
-
-			return err
-		}
-	}
-
-	return renderOK(c, s.templates.RenderListViewBytes, list)
 }
 
 func renderOKFunc(templateFunc func(data any) ([]byte, error), data any) func(echo.Context) error {

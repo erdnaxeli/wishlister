@@ -4,25 +4,24 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 
 	"github.com/erdnaxeli/wishlister"
 )
 
 type createGroupForm struct {
-	Name  string `validate:"required,max=255"`
-	Email string `validate:"required,email,max=255"`
+	Name  string `form:"name"  validate:"required,max=255"`
+	Email string `form:"email" validate:"required,email,max=255"`
 }
 
 func (s Server) createNewGroup(c echo.Context) error {
-	form := createGroupForm{
-		Name:  c.FormValue("name"),
-		Email: c.FormValue("email"),
+	form := createGroupForm{}
+	err := c.Bind(&form)
+	if err != nil {
+		return err
 	}
 
-	validate := validator.New(validator.WithRequiredStructEnabled())
-	err := validate.Struct(form)
+	err = s.validate.Struct(form)
 	if err != nil {
 		return err
 	}
