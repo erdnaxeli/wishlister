@@ -1,6 +1,6 @@
 all: build-server build-frontend
 
-build-server: generate-repository
+build-server: generate-repository generate-templates
 	go build ./cmd/server
 
 build-frontend: build-css
@@ -8,9 +8,11 @@ build-frontend: build-css
 build-css:
 	echo "nothing to do"
 
-
 generate-repository:
 	go tool sqlc generate
+
+generate-templates:
+	go run statictemplates/cmd/main.go cmd/server/templates/ main cmd/server/
 
 run:
 	go tool modd

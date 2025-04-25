@@ -1,6 +1,7 @@
+{{/* base: base.html */}}
 {{ define "content" }}
 <div>
     L'URL est incorrect, vous ne pouvez pas éditer la liste de vœux {{ .Name }}.
-    Vous pouvez cependant <a href="/{{ .ID }}">la consulter</a>.
+    Vous pouvez cependant <a href="/l/{{ .ID }}">la consulter</a>.
 </div>
 {{ end }}

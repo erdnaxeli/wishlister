@@ -29,6 +29,8 @@ func main() {
 		)
 	}
 
+	templates := NewTemplates()
+
 	e := echo.New()
 	e.Debug = true
 	e.Pre(
@@ -53,9 +55,8 @@ func main() {
 		e.Logger.Fatal(err)
 	}
 
-	setRoutes(e, app)
+	setRoutes(e, app, templates)
 	setStatics(e)
-	loadTemplates(e)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

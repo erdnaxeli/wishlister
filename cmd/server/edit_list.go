@@ -37,7 +37,7 @@ type editListFormElement struct {
 // HTML form.
 var ErrInvalidForm = errors.New("invalid form")
 
-func editList(c echo.Context, app wishlister.App) error {
+func editList(c echo.Context, app wishlister.App, templates Templates) error {
 	listID := c.Param("listID")
 	adminID := c.Param("adminID")
 
@@ -88,7 +88,7 @@ func editList(c echo.Context, app wishlister.App) error {
 		Data: string(dataJSON),
 	}
 
-	return c.Render(http.StatusOK, "listEdit", params)
+	return renderOK(c, templates.RenderListEditBytes, params)
 }
 
 func validateEditForm(c echo.Context) (editListForm, bool, error) {
