@@ -1,10 +1,11 @@
-// Implements a web server
+// Package server implements a web server
 package server
 
 import (
-	"github.com/erdnaxeli/wishlister"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/erdnaxeli/wishlister"
 )
 
 // Server expose a single method Run() to run the web server.
@@ -14,6 +15,7 @@ type Server struct {
 	wishlister wishlister.App
 }
 
+// Config is the server configuration.
 type Config struct {
 	Wishlister wishlister.App
 }

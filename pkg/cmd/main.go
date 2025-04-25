@@ -5,10 +5,10 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/erdnaxeli/wishlister/pkg/email"
-	"github.com/erdnaxeli/wishlister/pkg/server"
 
 	"github.com/erdnaxeli/wishlister"
+	"github.com/erdnaxeli/wishlister/pkg/email"
+	"github.com/erdnaxeli/wishlister/pkg/server"
 )
 
 type config struct {

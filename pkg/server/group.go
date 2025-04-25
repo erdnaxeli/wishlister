@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/erdnaxeli/wishlister"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+
+	"github.com/erdnaxeli/wishlister"
 )
 
 type createGroupForm struct {

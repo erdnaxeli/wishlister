@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/erdnaxeli/wishlister"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	nanoid "github.com/matoous/go-nanoid/v2"
+
+	"github.com/erdnaxeli/wishlister"
 )
 
 type listEditTmplParams struct {

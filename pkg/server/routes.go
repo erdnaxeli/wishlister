@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/erdnaxeli/wishlister"
 	"github.com/labstack/echo/v4"
+
+	"github.com/erdnaxeli/wishlister"
 )
 
 func setRoutes(e *echo.Echo, app wishlister.App, templates Templates) {
