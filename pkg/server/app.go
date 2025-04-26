@@ -31,6 +31,7 @@ func New(config Config) Server {
 	e.Pre(
 		middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}),
 	)
+	e.Use(middleware.Logger())
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
