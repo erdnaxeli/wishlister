@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -18,116 +19,140 @@ type listEditTmplParams struct {
 	Data string
 }
 
-type editListForm struct {
-	Elements []editListFormElement `json:"elements"`
+type editListData struct {
+	Elements []editListDataElement `json:"elements"`
 }
 
-type editListFormElement struct {
+type editListDataElement struct {
 	ID string `json:"id"`
 
-	Name        string `json:"name"`
-	NameError   string `json:"name_error"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
+	Name             string `json:"name"`
+	NameError        string `json:"name_error"`
+	Description      string `json:"description"`
+	DescriptionError string `json:"description_error"`
+	URL              string `json:"url"`
+	URLError         string `json:"url_error"`
 
 	Error string `json:"error"`
 }
 
-// ErrInvalidForm is the error when the from sent is invalid, meaning expected data is
+// ErrInvalidForm is the error when the form sent is invalid, meaning expected data is
 // not present. It probably means that the query was crafted and not sent through the
 // HTML form.
 var ErrInvalidForm = errors.New("invalid form")
 
 func (s Server) editList(c echo.Context) error {
-	listID := c.Param("listID")
-	adminID := c.Param("adminID")
+	params := getWishListParam{}
+	err := c.Bind(&params)
+	if err != nil {
+		return err
+	}
 
-	list, err := s.wishlister.GetEditableWishList(c.Request().Context(), listID, adminID)
+	list, err := s.wishlister.GetEditableWishList(
+		c.Request().Context(),
+		params.ListID,
+		params.AdminID,
+	)
 	if err != nil {
 		if errors.Is(err, wishlister.WishListNotFoundError{}) {
-			return c.Render(http.StatusNotFound, "listNotFound", nil)
+			return render(c, http.StatusNotFound, s.templates.RenderListNotFoundBytes, nil)
 		}
 
 		if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
-			return c.Render(http.StatusForbidden, "listAccessDenied", list)
+			return render(c, http.StatusForbidden, s.templates.RenderListAccessDeniedBytes, nil)
 		}
 
 		return err
 	}
 
-	var dataJSON []byte
+	var data editListData
 
 	if c.Request().Method == http.MethodPost {
-		form, ok, err := validateEditForm(c)
+		var ok bool
+		data, ok, err = s.validateEditForm(c)
 		if err != nil {
-			return c.String(http.StatusBadRequest, "bad request")
+			return err
 		}
 
 		if ok {
-			err := s.updateList(c, form, listID, adminID)
+			err := s.updateList(c, data, params.ListID, params.AdminID)
 			if err != nil {
 				return err
 			}
 
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/%s/%s", listID, adminID))
-		}
-
-		dataJSON, err = json.Marshal(form.Elements)
-		if err != nil {
-			return err
+			return c.Redirect(
+				http.StatusSeeOther,
+				fmt.Sprintf("/l/%s/%s", params.ListID, params.AdminID),
+			)
 		}
 	} else {
-		form := listToEditForm(list)
-		dataJSON, err = json.Marshal(form.Elements)
-		if err != nil {
-			return err
-		}
+		data = listToEditData(list)
 	}
 
-	params := listEditTmplParams{
+	dataJSON, err := json.Marshal(data.Elements)
+	if err != nil {
+		return err
+	}
+
+	tmplParams := listEditTmplParams{
 		Name: list.Name,
 		Data: string(dataJSON),
 	}
 
-	return renderOK(c, s.templates.RenderListEditBytes, params)
+	return renderOK(c, s.templates.RenderListEditBytes, tmplParams)
 }
 
-func validateEditForm(c echo.Context) (editListForm, bool, error) {
-	form := editListForm{}
+type listElementsForm struct {
+	Descriptions []string `form:"description" validate:"required"`
+	Names        []string `form:"name"        validate:"required"`
+	Urls         []string `form:"url"         validate:"required"`
+}
+
+func (s Server) validateEditForm(c echo.Context) (editListData, bool, error) {
+	data := editListData{}
 	ok := true
 
-	values, _ := c.FormParams()
-	nameValues, nameOk := values["name"]
-	descriptionValues, descriptionOk := values["description"]
-	urlValues, urlOk := values["url"]
-
-	if !nameOk || !descriptionOk || !urlOk ||
-		len(nameValues) != len(descriptionValues) || len(nameValues) != len(urlValues) {
-		return form, false, ErrInvalidForm
+	form := listElementsForm{}
+	err := c.Bind(&form)
+	if err != nil {
+		c.Logger().Print("Error while binding wishlist elements form: %s", err)
+		return data, false, ErrInvalidForm
 	}
 
-	for i := range nameValues {
-		element := editListFormElement{
+	// Validation at this step is very minimal: we only check that the 3 fields are
+	// present. If this step is not OK, it probably means that the form wasn't sent
+	// through the HTML page, and we just return an error.
+	// The actual validation of the values of the fields is done later while building
+	// the JSON that will be put on the page. This way, we can save error messages in
+	// the JSON to show them on the HTML page.
+	err = s.validate.Struct(form)
+	if err != nil {
+		c.Logger().Print("Error while validating wishlist elements form: %s", err)
+		return data, false, ErrInvalidForm
+	}
+
+	if len(form.Names) != len(form.Descriptions) || len(form.Names) != len(form.Urls) {
+		return data, false, ErrInvalidForm
+	}
+
+	for i := range form.Names {
+		element := editListDataElement{
 			ID:          uuid.NewString(),
-			Name:        nameValues[i],
-			Description: descriptionValues[i],
-			URL:         urlValues[i],
+			Name:        form.Names[i],
+			Description: form.Descriptions[i],
+			URL:         form.Urls[i],
 		}
 
-		if nameValues[i] == "" {
-			element.NameError = "Le nom ne peut pas être vide."
-			ok = false
-		}
-
-		form.Elements = append(form.Elements, element)
+		element, ok = s.validateElement(element, ok)
+		data.Elements = append(data.Elements, element)
 	}
 
-	return form, ok, nil
+	return data, ok, nil
 }
 
 func (s Server) updateList(
 	c echo.Context,
-	form editListForm,
+	form editListData,
 	listID string,
 	adminID string,
 ) error {
@@ -144,11 +169,11 @@ func (s Server) updateList(
 	return s.wishlister.UpdateListElements(c.Request().Context(), listID, adminID, elements)
 }
 
-func listToEditForm(list wishlister.WishList) editListForm {
-	form := editListForm{Elements: make([]editListFormElement, len(list.Elements))}
+func listToEditData(list wishlister.WishList) editListData {
+	data := editListData{Elements: make([]editListDataElement, len(list.Elements))}
 	for idx, element := range list.Elements {
 		id, _ := nanoid.New()
-		form.Elements[idx] = editListFormElement{
+		data.Elements[idx] = editListDataElement{
 			ID:          id,
 			Name:        element.Name,
 			Description: element.Description,
@@ -156,5 +181,32 @@ func listToEditForm(list wishlister.WishList) editListForm {
 		}
 	}
 
-	return form
+	return data
+}
+
+func (s Server) validateElement(element editListDataElement, ok bool) (editListDataElement, bool) {
+	if element.Name == "" {
+		element.NameError = "Le nom ne peut pas être vide."
+		ok = false
+	} else if utf8.RuneCountInString(element.Name) > 255 {
+		element.NameError = "Le nom ne peut pas dépasser 255 caractères."
+		ok = false
+	}
+
+	if utf8.RuneCountInString(element.Description) > 500 {
+		element.DescriptionError = "La description ne peut pas dépasser 500 caractères."
+		ok = false
+	}
+
+	if element.URL != "" {
+		if err := s.validate.Var(element.URL, "startswith=https://|startswith=http://,url"); err != nil {
+			element.URLError = "L'URL n'est pas valide."
+			ok = false
+		} else if utf8.RuneCountInString(element.URL) > 2000 {
+			element.URLError = "L'URL ne peut pas dépasser 2000 caractères."
+			ok = false
+		}
+	}
+
+	return element, ok
 }

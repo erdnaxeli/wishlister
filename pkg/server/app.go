@@ -2,6 +2,7 @@
 package server
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -12,6 +13,7 @@ import (
 type Server struct {
 	e          *echo.Echo
 	templates  Templates
+	validate   *validator.Validate
 	wishlister wishlister.App
 }
 
@@ -30,9 +32,12 @@ func New(config Config) Server {
 		middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}),
 	)
 
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
 	s := Server{
 		e:          e,
 		templates:  templates,
+		validate:   validate,
 		wishlister: config.Wishlister,
 	}
 
