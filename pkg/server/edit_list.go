@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -25,15 +26,17 @@ type editListData struct {
 type editListDataElement struct {
 	ID string `json:"id"`
 
-	Name        string `json:"name"`
-	NameError   string `json:"name_error"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
+	Name             string `json:"name"`
+	NameError        string `json:"name_error"`
+	Description      string `json:"description"`
+	DescriptionError string `json:"description_error"`
+	URL              string `json:"url"`
+	URLError         string `json:"url_error"`
 
 	Error string `json:"error"`
 }
 
-// ErrInvalidForm is the error when the from sent is invalid, meaning expected data is
+// ErrInvalidForm is the error when the form sent is invalid, meaning expected data is
 // not present. It probably means that the query was crafted and not sent through the
 // HTML form.
 var ErrInvalidForm = errors.New("invalid form")
@@ -52,11 +55,11 @@ func (s Server) editList(c echo.Context) error {
 	)
 	if err != nil {
 		if errors.Is(err, wishlister.WishListNotFoundError{}) {
-			return c.Render(http.StatusNotFound, "listNotFound", nil)
+			return render(c, http.StatusNotFound, s.templates.RenderListNotFoundBytes, nil)
 		}
 
 		if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
-			return c.Render(http.StatusForbidden, "listAccessDenied", list)
+			return render(c, http.StatusForbidden, s.templates.RenderListAccessDeniedBytes, nil)
 		}
 
 		return err
@@ -112,12 +115,20 @@ func (s Server) validateEditForm(c echo.Context) (editListData, bool, error) {
 	form := listElementsForm{}
 	err := c.Bind(&form)
 	if err != nil {
-		return data, false, err
+		c.Logger().Print("Error while binding wishlist elements form: %s", err)
+		return data, false, ErrInvalidForm
 	}
 
+	// Validation at this step is very minimal: we only check that the 3 fields are
+	// present. If this step is not OK, it probably means that the form wasn't sent
+	// through the HTML page, and we just return an error.
+	// The actual validation of the values of the fields is done later while building
+	// the JSON that will be put on the page. This way, we can save error messages in
+	// the JSON to show them on the HTML page.
 	err = s.validate.Struct(form)
 	if err != nil {
-		return data, false, err
+		c.Logger().Print("Error while validating wishlist elements form: %s", err)
+		return data, false, ErrInvalidForm
 	}
 
 	if len(form.Names) != len(form.Descriptions) || len(form.Names) != len(form.Urls) {
@@ -132,11 +143,7 @@ func (s Server) validateEditForm(c echo.Context) (editListData, bool, error) {
 			URL:         form.Urls[i],
 		}
 
-		if form.Names[i] == "" {
-			element.NameError = "Le nom ne peut pas être vide."
-			ok = false
-		}
-
+		element, ok = s.validateElement(element, ok)
 		data.Elements = append(data.Elements, element)
 	}
 
@@ -175,4 +182,31 @@ func listToEditData(list wishlister.WishList) editListData {
 	}
 
 	return data
+}
+
+func (s Server) validateElement(element editListDataElement, ok bool) (editListDataElement, bool) {
+	if element.Name == "" {
+		element.NameError = "Le nom ne peut pas être vide."
+		ok = false
+	} else if utf8.RuneCountInString(element.Name) > 255 {
+		element.NameError = "Le nom ne peut pas dépasser 255 caractères."
+		ok = false
+	}
+
+	if utf8.RuneCountInString(element.Description) > 500 {
+		element.DescriptionError = "La description ne peut pas dépasser 500 caractères."
+		ok = false
+	}
+
+	if element.URL != "" {
+		if err := s.validate.Var(element.URL, "startswith=https://|startswith=http://,url"); err != nil {
+			element.URLError = "L'URL n'est pas valide."
+			ok = false
+		} else if utf8.RuneCountInString(element.URL) > 2000 {
+			element.URLError = "L'URL ne peut pas dépasser 2000 caractères."
+			ok = false
+		}
+	}
+
+	return element, ok
 }

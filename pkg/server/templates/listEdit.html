@@ -19,14 +19,32 @@
                 </label>
             </template>
             </label>
-            <label>
-                Description (optionnel)
-                <input type="text" name="description" x-model="data[index]['description']"/>
-            </label>
-            <label>
-                Lien vers l'article (optionnel)
-                <input type="text" name="url" x-model="data[index]['url']"/>
-            </label>
+            <template x-if="data[index]['description_error']">
+                <label>
+                    Description (optionnelle)
+                    <input type="text" name="description" x-model="data[index]['description']" aria-invalid="true" aria-describedby="invalid-helper" />
+                    <small  id="invalid-helper" x-text="data[index]['description_error']"></small>
+                </label>
+            </template>
+            <template x-if="!data[index]['description_error']">
+                <label>
+                    Description (optionnelle)
+                    <input type="text" name="description" x-model="data[index]['description']"/>
+                </label>
+            </template>
+            <template x-if="data[index]['url_error']">
+                <label>
+                    Lien vers l'article (optionnel)
+                    <input type="text" name="url" x-model="data[index]['url']" aria-invalid="true" aria-describedby="invalid-helper" />
+                    <small  id="invalid-helper" x-text="data[index]['url_error']"></small>
+                </label>
+            </template>
+            <template x-if="!data[index]['url_error']">
+                <label>
+                    Lien vers l'article (optionnel)
+                    <input type="text" name="url" x-model="data[index]['url']"/>
+                </label>
+            </template>
             <button
                 @click="data.splice(index, 1)"
                 type="button"
