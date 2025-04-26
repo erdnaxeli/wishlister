@@ -1,26 +1,26 @@
 create table groups (
-    id varchar(21) primary key not null,
-    name varchar(255) not null
-);
+    id TEXT primary key,
+    name TEXT not null
+) strict;
 
 create table wishlists (
-    id varchar(21) primary key not null,
-    admin_id varchar(21) not null,
-    user_id varchar(21) references users (id),
-    name varchar(255) not null,
-    group_id varchar(21) references groups (id)
-);
+    id TEXT primary key,
+    admin_id TEXT not null,
+    user_id TEXT references users (id),
+    name TEXT not null,
+    group_id TEXT references groups (id)
+) strict;
 
 create table wishlist_elements (
-    id varchar(21) primary key not null,
-    wishlist_id varchar(21) not null references wishlists (id),
-    name varchar(255) not null,
+    id TEXT primary key,
+    wishlist_id TEXT not null references wishlists (id),
+    name TEXT not null,
     description text,
-    url varchar(2048)
-);
+    url TEXT
+) strict;
 
 create table users (
-    id varchar(21) primary key not null,
-    name varchar(255) not null,
-    email varchar(255)
-);
+    id TEXT primary key,
+    name TEXT not null,
+    email TEXT
+) strict;
