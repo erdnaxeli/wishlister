@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"unicode/utf8"
 
+	"github.com/go-playground/form"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -19,11 +20,11 @@ type listEditTmplParams struct {
 	Data string
 }
 
-type editListData struct {
-	Elements []editListDataElement `json:"elements"`
+type editListForm struct {
+	Elements []editListFormElement `json:"elements"`
 }
 
-type editListDataElement struct {
+type editListFormElement struct {
 	ID string `json:"id"`
 
 	Name             string `json:"name"`
@@ -65,7 +66,7 @@ func (s Server) editList(c echo.Context) error {
 		return err
 	}
 
-	var data editListData
+	var data editListForm
 
 	if c.Request().Method == http.MethodPost {
 		var ok bool
@@ -102,49 +103,26 @@ func (s Server) editList(c echo.Context) error {
 	return renderOK(c, s.templates.RenderListEditBytes, tmplParams)
 }
 
-type listElementsForm struct {
-	Descriptions []string `form:"description" validate:"required"`
-	Names        []string `form:"name"        validate:"required"`
-	Urls         []string `form:"url"         validate:"required"`
-}
-
-func (s Server) validateEditForm(c echo.Context) (editListData, bool, error) {
-	data := editListData{}
+func (s Server) validateEditForm(c echo.Context) (editListForm, bool, error) {
+	data := editListForm{}
 	ok := true
-
-	form := listElementsForm{}
-	err := c.Bind(&form)
+	decoder := form.NewDecoder()
+	values, err := c.FormParams()
 	if err != nil {
-		c.Logger().Print("Error while binding wishlist elements form: %s", err)
-		return data, false, ErrInvalidForm
+		c.Logger().Print("Error while reading wishlist elements form: %s", err)
+		return data, false, err
 	}
 
-	// Validation at this step is very minimal: we only check that the 3 fields are
-	// present. If this step is not OK, it probably means that the form wasn't sent
-	// through the HTML page, and we just return an error.
-	// The actual validation of the values of the fields is done later while building
-	// the JSON that will be put on the page. This way, we can save error messages in
-	// the JSON to show them on the HTML page.
-	err = s.validate.Struct(form)
+	err = decoder.Decode(&data, values)
 	if err != nil {
-		c.Logger().Print("Error while validating wishlist elements form: %s", err)
-		return data, false, ErrInvalidForm
+		c.Logger().Print("Error while decoding wishlist elements form: %s", err)
+		return data, false, err
 	}
 
-	if len(form.Names) != len(form.Descriptions) || len(form.Names) != len(form.Urls) {
-		return data, false, ErrInvalidForm
-	}
-
-	for i := range form.Names {
-		element := editListDataElement{
-			ID:          uuid.NewString(),
-			Name:        form.Names[i],
-			Description: form.Descriptions[i],
-			URL:         form.Urls[i],
-		}
-
+	for i, element := range data.Elements {
+		element.ID = uuid.NewString()
 		element, ok = s.validateElement(element, ok)
-		data.Elements = append(data.Elements, element)
+		data.Elements[i] = element
 	}
 
 	return data, ok, nil
@@ -152,7 +130,7 @@ func (s Server) validateEditForm(c echo.Context) (editListData, bool, error) {
 
 func (s Server) updateList(
 	c echo.Context,
-	form editListData,
+	form editListForm,
 	listID string,
 	adminID string,
 ) error {
@@ -169,11 +147,11 @@ func (s Server) updateList(
 	return s.wishlister.UpdateListElements(c.Request().Context(), listID, adminID, elements)
 }
 
-func listToEditData(list wishlister.WishList) editListData {
-	data := editListData{Elements: make([]editListDataElement, len(list.Elements))}
+func listToEditData(list wishlister.WishList) editListForm {
+	data := editListForm{Elements: make([]editListFormElement, len(list.Elements))}
 	for idx, element := range list.Elements {
 		id, _ := nanoid.New()
-		data.Elements[idx] = editListDataElement{
+		data.Elements[idx] = editListFormElement{
 			ID:          id,
 			Name:        element.Name,
 			Description: element.Description,
@@ -184,7 +162,7 @@ func listToEditData(list wishlister.WishList) editListData {
 	return data
 }
 
-func (s Server) validateElement(element editListDataElement, ok bool) (editListDataElement, bool) {
+func (s Server) validateElement(element editListFormElement, ok bool) (editListFormElement, bool) {
 	if element.Name == "" {
 		element.NameError = "Le nom ne peut pas être vide."
 		ok = false
