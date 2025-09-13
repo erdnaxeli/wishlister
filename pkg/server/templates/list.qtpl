@@ -1,0 +1,35 @@
+{% import "github.com/erdnaxeli/wishlister" %}
+
+{% code
+type ListPage struct {
+    List wishlister.WishList
+}
+%}
+
+{% func (p ListPage) Body() %}
+<h2>
+    {%s p.List.Name %}
+    {% if p.List.AdminID != "" %} (<a href="/l/{%s p.List.ID %}/{%s p.List.AdminID %}/edit">éditer</a>){% endif %}
+</h2>
+
+{% if p.List.GroupID != "" %}
+  Cette liste fait partie d'un <a href="https://www.malistedevoeux.fr/g/{%s p.List.GroupID %}">groupe</a>.
+{% endif %}
+
+{% if p.List.AdminID != "" %}
+    <article>
+        <div>Lien à partager : <a href="https://malistedevoeux.fr/l/{%s p.List.ID %}">https://malistedevoeux.fr/l/{%s p.List.ID %}</a></div>
+        <div>Lien d'aministration : <a href="https://malistedevoeux.fr/l/{%s p.List.ID %}/{%s p.List.AdminID %}">https://malistedevoeux.fr/l/{%s p.List.ID %}/{%s p.List.AdminID %}</a></div>
+    </article>
+{% endif %}
+
+<ul>
+    {% for _, element := range p.List.Elements %}
+        <li>
+            {%s element.Name %}
+            {% if element.Description != "" %} : {%s element.Description %}{% endif %}
+            {% if element.URL != "" %} (<a href='{%s element.URL %}'>lien</a>){% endif %}
+        </li>
+    {% endfor  %}
+</ul>
+{% endfunc %}

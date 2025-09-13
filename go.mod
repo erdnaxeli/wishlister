@@ -6,6 +6,7 @@ tool (
 	github.com/cortesi/modd/cmd/modd
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 	github.com/sqlc-dev/sqlc/cmd/sqlc
+	github.com/valyala/quicktemplate/qtc
 )
 
 require (
@@ -17,6 +18,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/matoous/go-nanoid/v2 v2.1.0
+	github.com/valyala/quicktemplate v1.8.0
 	golang.org/x/text v0.24.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	modernc.org/sqlite v1.37.0

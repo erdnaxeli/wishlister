@@ -7,12 +7,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/erdnaxeli/wishlister"
+	"github.com/erdnaxeli/wishlister/pkg/server/templates"
 )
 
 // Server expose a single method Run() to run the web server.
 type Server struct {
 	e          *echo.Echo
-	templates  Templates
+	renderer   templates.PageRenderer
 	validate   *validator.Validate
 	wishlister wishlister.App
 }
@@ -24,8 +25,6 @@ type Config struct {
 
 // New creates a new Server object.
 func New(config Config) Server {
-	templates := NewTemplates()
-
 	e := echo.New()
 	e.Debug = true
 	e.Pre(
@@ -37,7 +36,7 @@ func New(config Config) Server {
 
 	s := Server{
 		e:          e,
-		templates:  templates,
+		renderer:   templates.DefaultPageRenderer{},
 		validate:   validate,
 		wishlister: config.Wishlister,
 	}

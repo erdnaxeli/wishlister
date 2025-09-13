@@ -1,5 +1,8 @@
-{{/* base: base.html */}}
-{{ define "content" }}
+{% code
+type NewPage struct {}
+%}
+
+{% func (p NewPage) Body() %}
 <div>
   <h2>Créer une liste de vœux</h2>
   <form method="POST">
@@ -18,7 +21,7 @@
       </label>
     </fieldset>
 
-    <input type="submit" value="Créer" />  
+    <input type="submit" value="Créer" />
   </form>
 </div>
-{{ end }}
+{% endfunc %}

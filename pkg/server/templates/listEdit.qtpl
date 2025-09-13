@@ -1,0 +1,61 @@
+{% code
+type ListEditForm struct {
+	Name     string
+	Elements []ListEditFormElement
+}
+
+type ListEditFormElement struct {
+	ID string
+
+	Name             string
+	NameError        string
+	Description      string
+	DescriptionError string
+	URL              string
+	URLError         string
+
+	Error string
+}
+
+type ListEditPage struct {
+    Form ListEditForm
+}
+%}
+
+{% func (p ListEditPage) Body() %}
+<h2>Éditer la liste de vœux "{%s p.Form.Name %}"</h2>
+
+<form method="POST">
+    {% for i, element := range p.Form.Elements %}
+        <fieldset>
+            <label>
+                Nom
+                <input type="text" name="Elements[{%d i %}].Name" value="{%s element.Name %}" {% if element.NameError != "" %}aria-invalid="true" aria-describedby="invalid-helper"{% endif %}/>
+                {% if element.NameError != "" %}<small  id="invalid-helper">{%s element.NameError %}</small>{% endif %}
+            </label>
+            <label>
+                Description (optionnelle)
+                <input type="text" name="Elements[{%d i %}].Description" value="{%s element.Description %}" {% if element.DescriptionError != "" %}aria-invalid="true" aria-describedby="invalid-helper"{% endif %}/>
+                {% if element.DescriptionError != "" %}<small  id="invalid-helper">{%s element.DescriptionError %}</small>{% endif %}
+            </label>
+            <label>
+                Lien vers l'article (optionnel)
+                <input type="text" name="Elements[{%d i %}].URL" value="{%s element.URL %}" {% if element.URLError != "" %}aria-invalid="true" aria-describedby="invalid-helper"{% endif %}/>
+                {% if element.URLError != "" %}<small  id="invalid-helper">{%s element.URLError %}</small>{% endif %}
+            </label>
+            <button
+                @click="data.splice(index, 1)"
+                type="button"
+            >Supprimer</button>
+            <hr />
+        </fieldset>
+    {% endfor %}
+
+    <button
+        @click="data.push({ 'id': crypto.randomUUID(), 'name': '', 'description': '', 'url': ''})"
+        type="button"
+    >Ajouter un nouvel élément</button>
+
+    <input type="submit" value="Enregistrer" />
+</form>
+{% endfunc %}

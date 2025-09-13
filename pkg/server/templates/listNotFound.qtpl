@@ -1,8 +1,11 @@
-{{/* base: base.html */}}
-{{ define "content" }}
+{% code
+type ListNotFoundPage struct {}
+%}}
+
+{% func Body() %}
 <h2>Erreur</h2>
 
 <p>La liste n'a pas pu être trouvée.</p>
 
 <p><a href="/">Retourner à l'accueil</a></p>
-{{ end }}
+{% endfunc %}}

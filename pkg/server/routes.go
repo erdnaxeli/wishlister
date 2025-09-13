@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -31,23 +33,20 @@ func renderOKFunc(templateFunc func(data any) ([]byte, error), data any) func(ec
 
 func renderFunc(
 	code int,
-	templateFunc func(data any) ([]byte, error),
+	f func(io.Writer),
 	data any,
 ) func(echo.Context) error {
 	return func(c echo.Context) error {
-		return render(c, code, templateFunc, data)
+		return render(c, code, f, data)
 	}
 }
 
-func renderOK(c echo.Context, templateFunc func(data any) ([]byte, error), data any) error {
-	return render(c, http.StatusOK, templateFunc, data)
+func renderOK(c echo.Context, f func(io.Writer), data any) error {
+	return render(c, http.StatusOK, f, data)
 }
 
-func render(c echo.Context, code int, templateFunc func(data any) ([]byte, error), data any) error {
-	bytes, err := templateFunc(data)
-	if err != nil {
-		return err
-	}
-
-	return c.HTMLBlob(code, bytes)
+func render(c echo.Context, code int, f func(io.Writer), data any) error {
+	buffer := bytes.Buffer{}
+	f(&buffer)
+	return c.HTMLBlob(code, buffer.Bytes())
 }

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,29 +12,8 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	"github.com/erdnaxeli/wishlister"
+	"github.com/erdnaxeli/wishlister/pkg/server/templates"
 )
-
-type listEditTmplParams struct {
-	Name string
-	Data string
-}
-
-type editListForm struct {
-	Elements []editListFormElement `json:"elements"`
-}
-
-type editListFormElement struct {
-	ID string `json:"id"`
-
-	Name             string `json:"name"`
-	NameError        string `json:"name_error"`
-	Description      string `json:"description"`
-	DescriptionError string `json:"description_error"`
-	URL              string `json:"url"`
-	URLError         string `json:"url_error"`
-
-	Error string `json:"error"`
-}
 
 // ErrInvalidForm is the error when the form sent is invalid, meaning expected data is
 // not present. It probably means that the query was crafted and not sent through the
@@ -66,7 +44,7 @@ func (s Server) editList(c echo.Context) error {
 		return err
 	}
 
-	var data editListForm
+	var data templates.ListEditForm
 
 	if c.Request().Method == http.MethodPost {
 		var ok bool
@@ -90,21 +68,13 @@ func (s Server) editList(c echo.Context) error {
 		data = listToEditData(list)
 	}
 
-	dataJSON, err := json.Marshal(data.Elements)
-	if err != nil {
-		return err
-	}
-
-	tmplParams := listEditTmplParams{
-		Name: list.Name,
-		Data: string(dataJSON),
-	}
-
-	return renderOK(c, s.templates.RenderListEditBytes, tmplParams)
+	data.Name = list.Name
+	s.renderer.Render()
+	return renderOK(c, s.renderer.RenderListEditBytes, data)
 }
 
-func (s Server) validateEditForm(c echo.Context) (editListForm, bool, error) {
-	data := editListForm{}
+func (s Server) validateEditForm(c echo.Context) (templates.ListEditForm, bool, error) {
+	data := templates.ListEditForm{}
 	ok := true
 	decoder := form.NewDecoder()
 	values, err := c.FormParams()
@@ -130,13 +100,13 @@ func (s Server) validateEditForm(c echo.Context) (editListForm, bool, error) {
 
 func (s Server) updateList(
 	c echo.Context,
-	form editListForm,
+	data templates.ListEditForm,
 	listID string,
 	adminID string,
 ) error {
-	elements := make([]wishlister.WishListElement, len(form.Elements))
+	elements := make([]wishlister.WishListElement, len(data.Elements))
 
-	for idx, elt := range form.Elements {
+	for idx, elt := range data.Elements {
 		elements[idx] = wishlister.WishListElement{
 			Name:        elt.Name,
 			Description: elt.Description,
@@ -147,11 +117,11 @@ func (s Server) updateList(
 	return s.wishlister.UpdateListElements(c.Request().Context(), listID, adminID, elements)
 }
 
-func listToEditData(list wishlister.WishList) editListForm {
-	data := editListForm{Elements: make([]editListFormElement, len(list.Elements))}
+func listToEditData(list wishlister.WishList) templates.ListEditForm {
+	data := templates.ListEditForm{Elements: make([]templates.ListEditFormElement, len(list.Elements))}
 	for idx, element := range list.Elements {
 		id, _ := nanoid.New()
-		data.Elements[idx] = editListFormElement{
+		data.Elements[idx] = templates.ListEditFormElement{
 			ID:          id,
 			Name:        element.Name,
 			Description: element.Description,
@@ -162,7 +132,7 @@ func listToEditData(list wishlister.WishList) editListForm {
 	return data
 }
 
-func (s Server) validateElement(element editListFormElement, ok bool) (editListFormElement, bool) {
+func (s Server) validateElement(element templates.ListEditFormElement, ok bool) (templates.ListEditFormElement, bool) {
 	if element.Name == "" {
 		element.NameError = "Le nom ne peut pas être vide."
 		ok = false

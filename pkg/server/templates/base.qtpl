@@ -1,4 +1,20 @@
-{{ block "base" . }}
+{% interface
+Page {
+	Body()
+}
+%}
+
+{% interface PageRenderer {
+    Render(p Page)
+}
+%}
+
+{% code
+type DefaultPageRenderer struct {}
+%}
+
+
+{% func (r DefaultPageRenderer) Render(p Page) %}
 <!doctype html>
 <html>
     <head>
@@ -11,8 +27,8 @@
     <body>
         <main class="container">
             <h1>Ma liste de vœux !</h1>
-            {{ block "content" . }} Nothing to see here. {{ end }}
+            {%= p.Body() %}
         </main>
     </body>
 </html>
-{{ end }}
+{% endfunc %}
