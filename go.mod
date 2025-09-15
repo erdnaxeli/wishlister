@@ -21,7 +21,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	golang.org/x/text v0.29.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	modernc.org/sqlite v1.38.2
+	modernc.org/sqlite v1.39.0
 )
 
 require (
