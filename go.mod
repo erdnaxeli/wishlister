@@ -15,7 +15,7 @@ require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/dave/jennifer v1.7.1
 	github.com/go-hermes/hermes/v2 v2.5.2
-	github.com/go-playground/validator/v10 v10.27.0
+	github.com/go-playground/validator/v10 v10.28.0
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/matoous/go-nanoid/v2 v2.1.0
