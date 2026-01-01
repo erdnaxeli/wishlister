@@ -181,20 +181,13 @@ func (a *app) CreateWishList(
 func (a *app) GetGroup(_ context.Context, _ string) {}
 
 func (a *app) GetWishList(ctx context.Context, listID string) (WishList, error) {
-	list, err := a.queries.GetWishList(ctx, listID)
+	wishList, err := a.getWishList(ctx, listID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return WishList{}, err
-		}
 		return WishList{}, err
 	}
 
-	wishList := WishList{
-		ID:      list.ID,
-		Name:    list.Name,
-		GroupID: list.GroupID.String,
-	}
-
+	// hide admin ID
+	wishList.AdminID = ""
 	err = a.populateElements(ctx, &wishList)
 	if err != nil {
 		return WishList{}, err
@@ -278,6 +271,19 @@ func (a *app) checkListEditAccess(
 	listID string,
 	adminID string,
 ) (WishList, error) {
+	wishList, err := a.getWishList(ctx, listID)
+	if err != nil {
+		return WishList{}, err
+	}
+
+	if wishList.AdminID != adminID {
+		return WishList{}, WishListInvalidAdminIDError{}
+	}
+
+	return wishList, nil
+}
+
+func (a *app) getWishList(ctx context.Context, listID string) (WishList, error) {
 	list, err := a.queries.GetWishList(ctx, listID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -286,16 +292,13 @@ func (a *app) checkListEditAccess(
 		return WishList{}, err
 	}
 
-	if list.AdminID != adminID {
-		return WishList{}, WishListInvalidAdminIDError{}
-	}
-
-	return WishList{
-		ID:      list.ID,
+	wishList := WishList{
 		AdminID: list.AdminID,
-		GroupID: list.GroupID.String,
+		ID:      list.ID,
 		Name:    list.Name,
-	}, nil
+		GroupID: list.GroupID.String,
+	}
+	return wishList, nil
 }
 
 func (a *app) populateElements(ctx context.Context, list *WishList) error {

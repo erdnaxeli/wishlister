@@ -1,24 +1,27 @@
 {{/* base: base.html */}}
 {{ define "content" }}
 <div>
-  <h2>Créer une liste de vœux</h2>
-  <form method="POST">
-    <fieldset>
-      <label>
-        Nom d'utilisateur
-        <input type="text" name="user" id="user" />
-      </label>
-      <label>
-        Nom de la liste
-        <input type="text" name="name" id="name" />
-      </label>
-      <label>
-        Addresse email (optionnel). Cela permet de recevoir le lien de la liste de vœux par email et de la retrouver si vous l'avez perdue.
-        <input type="text" name="email" id="email" />
-      </label>
-    </fieldset>
+    <h2>Créer une liste de vœux</h2>
+    <form method="POST" class="row g-3">
+        <div class="col-12">
+            <label for="name" class="form-label">Nom de la liste</label>
+            <input type="text" class="form-control" name="name" id="name" />
+        </div>
+        <div class="col-md-6">
+            <label for="user" class="form-label">Nom d'utilisateur</label>
+            <input type="text" class="form-control" name="user" id="user" />
+        </div>
+        <div class="col-md-6">
+            <label for="email" class="form-label">Adresse email (optionnel)</label>
+            <input type="email" class="form-control" name="email" id="email" />
+            <div class="form-text">
+                Cela permet de recevoir le lien de la liste de vœux par email et de la retrouver si vous l'avez perdue.
+            </div>
+        </div>
 
-    <input type="submit" value="Créer" />  
-  </form>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Créer</button>
+        </div>
+    </form>
 </div>
 {{ end }}
