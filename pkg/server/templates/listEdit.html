@@ -2,62 +2,67 @@
 {{ define "content" }}
 <h2>Éditer la liste de vœux "{{ .Name }}"</h2>
 
-<form method="POST" x-data='{ data: {{ .Data }} }'>
-    <template x-for="(obj, index) in data">
-        <fieldset>
-            <template x-if="data[index]['name_error']" >
-                <label>
-                    Nom
-                    <input type="text" :name="`Elements[${index}].Name`" x-model="data[index]['name']" aria-invalid="true" aria-describedby="invalid-helper" />
-                    <small  id="invalid-helper" x-text="data[index]['name_error']"></small>
-                </label>
-            </template>
-            <template x-if="!data[index]['name_error']" >
-                <label>
-                    Nom
-                    <input type="text" :name="`Elements[${index}].Name`" x-model="data[index]['name']" />
-                </label>
-            </template>
-            </label>
-            <template x-if="data[index]['description_error']">
-                <label>
-                    Description (optionnelle)
-                    <input type="text" :name="`Elements[${index}].Description`" x-model="data[index]['description']" aria-invalid="true" aria-describedby="invalid-helper" />
-                    <small  id="invalid-helper" x-text="data[index]['description_error']"></small>
-                </label>
-            </template>
-            <template x-if="!data[index]['description_error']">
-                <label>
-                    Description (optionnelle)
-                    <input type="text" :name="`Elements[${index}].Description`" x-model="data[index]['description']"/>
-                </label>
-            </template>
-            <template x-if="data[index]['url_error']">
-                <label>
-                    Lien vers l'article (optionnel)
-                    <input type="text" :name="`Elements[${index}].URL`" x-model="data[index]['url']" aria-invalid="true" aria-describedby="invalid-helper" />
-                    <small  id="invalid-helper" x-text="data[index]['url_error']"></small>
-                </label>
-            </template>
-            <template x-if="!data[index]['url_error']">
-                <label>
-                    Lien vers l'article (optionnel)
-                    <input type="text" :name="`Elements[${index}].URL`" x-model="data[index]['url']"/>
-                </label>
-            </template>
-            <button
-                @click="data.splice(index, 1)"
-                type="button"
-            >Supprimer</button>
-            <hr />
-        </fieldset>
+<form method="POST" x-data='{ data: {{ .Data }} }' class="mt-3">
+    <template x-for="(obj, index) in data" :key="obj.id">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label :for="`Elements-${index}-Name`" class="form-label">Nom</label>
+                        <input type="text" :name="`Elements[${index}].Name`" :id="`Elements-${index}-Name`"
+                            x-model="data[index]['name']" class="form-control"
+                            x-bind:class="{ 'is-invalid': data[index]['name_error'] }"
+                            x-bind:aria-describedby="data[index]['name_error'] ? `invalid-helper-${index}-name` : null" />
+                        <div class="invalid-feedback" :id="`invalid-helper-${index}-name`"
+                            x-text="data[index]['name_error']"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label :for="`Elements-${index}-Description`" class="form-label">Description
+                            (optionnelle)</label>
+                        <input type="text" :name="`Elements[${index}].Description`"
+                            :id="`Elements-${index}-Description`" x-model="data[index]['description']"
+                            class="form-control" x-bind:class="{ 'is-invalid': data[index]['description_error'] }"
+                            x-bind:aria-describedby="data[index]['description_error'] ? `invalid-helper-${index}-desc` : null" />
+                        <div class="invalid-feedback" :id="`invalid-helper-${index}-desc`"
+                            x-text="data[index]['description_error']"></div>
+                    </div>
+
+                    <div class="col-md-9">
+                        <label :for="`Elements-${index}-URL`" class="form-label">Lien vers l'article (optionnel)</label>
+                        <input type="text" :name="`Elements[${index}].URL`" :id="`Elements-${index}-URL`"
+                            x-model="data[index]['url']" class="form-control"
+                            x-bind:class="{ 'is-invalid': data[index]['url_error'] }"
+                            x-bind:aria-describedby="data[index]['url_error'] ? `invalid-helper-${index}-url` : null" />
+                        <div class="invalid-feedback" :id="`invalid-helper-${index}-url`"
+                            x-text="data[index]['url_error']"></div>
+                    </div>
+
+                    <div class="col-12 col-md-3 d-flex align-items-end justify-content-end">
+                        <button @click.prevent="data.splice(index, 1)" type="button"
+                            class="btn btn-sm btn-outline-danger p-2" aria-label="Supprimer l'élément">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-trash" viewBox="0 0 16 16">
+                                <path
+                                    d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path
+                                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                            <span class="visually-hidden">Supprimer</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </template>
 
-    <button
-        @click="data.push({ 'id': crypto.randomUUID(), 'name': '', 'description': '', 'url': ''})"
-        type="button"
-    >Ajouter un nouvel élément</button>
+    <div class="mb-3">
+        <button @click.prevent="data.push({ 'id': crypto.randomUUID(), 'name': '', 'description': '', 'url': ''})"
+            type="button" class="btn btn-secondary">Ajouter un nouvel élément</button>
+    </div>
 
-    <input type="submit" value="Enregistrer" />
+    <div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
 </form>
 {{ end }}

@@ -43,7 +43,7 @@ func New(config Config) Server {
 	}
 
 	s.setRoutes()
-	s.setStatics()
+	// s.setStatics()
 
 	return s
 }
