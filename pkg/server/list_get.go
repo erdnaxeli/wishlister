@@ -41,5 +41,5 @@ func (s Server) getWishList(c echo.Context) error {
 		}
 	}
 
-	return renderOK(c, s.templates.RenderListViewBytes, list)
+	return renderOK(c, s.templates.RenderListView, list)
 }
