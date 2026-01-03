@@ -10,41 +10,6 @@ import (
 	"github.com/erdnaxeli/wishlister"
 )
 
-type createWishListForm struct {
-	Name  string `form:"name"  validate:"required,max=255"`
-	User  string `form:"user"  validate:"required,max=255"`
-	Email string `form:"email" validate:"max=255"`
-}
-
-func (s Server) createNewWishList(c echo.Context) error {
-	form := createWishListForm{}
-	err := c.Bind(&form)
-	if err != nil {
-		return err
-	}
-
-	err = s.validate.Struct(form)
-	if err != nil {
-		return err
-	}
-
-	params := wishlister.CreateWishlistParams{
-		Name:      form.Name,
-		Username:  form.User,
-		UserEmail: form.Email,
-	}
-
-	listID, adminID, err := s.wishlister.CreateWishList(
-		c.Request().Context(),
-		params,
-	)
-	if err != nil {
-		return err
-	}
-
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("l/%s/%s", listID, adminID))
-}
-
 type getWishListParam struct {
 	AdminID string `param:"adminID"`
 	ListID  string `param:"listID"`
