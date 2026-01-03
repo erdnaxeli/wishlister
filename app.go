@@ -24,6 +24,15 @@ type CreateWishlistParams struct {
 	UserEmail string
 }
 
+// ErrWishListNameEmpty is returned when the wish list name is empty.
+var ErrWishListNameEmpty = errors.New("wish list name cannot be empty")
+
+// ErrWishListUsernameEmpty is returned when the wish list username is empty.
+var ErrWishListUsernameEmpty = errors.New("wish list username cannot be empty")
+
+// ErrWishListUserEmailEmpty is returned when the wish list user email is empty.
+var ErrWishListUserEmailEmpty = errors.New("wish list user email cannot be empty")
+
 // CreateGroupParams represents the parameters to create a new group.
 type CreateGroupParams struct {
 	Name      string
@@ -141,6 +150,18 @@ func (a *app) CreateWishList(
 	ctx context.Context,
 	params CreateWishlistParams,
 ) (listID string, adminID string, err error) {
+	if params.Name == "" {
+		return "", "", ErrWishListNameEmpty
+	}
+
+	if params.Username == "" {
+		return "", "", ErrWishListUsernameEmpty
+	}
+
+	if params.UserEmail == "" {
+		return "", "", ErrWishListUserEmailEmpty
+	}
+
 	listID, _ = nanoid.New()
 	adminID, _ = nanoid.New()
 
