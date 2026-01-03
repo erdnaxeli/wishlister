@@ -56,11 +56,11 @@ func (s Server) editList(c echo.Context) error {
 	)
 	if err != nil {
 		if errors.Is(err, wishlister.WishListNotFoundError{}) {
-			return render(c, http.StatusNotFound, s.templates.RenderListNotFoundBytes, nil)
+			return render(c, http.StatusNotFound, s.templates.RenderListNotFound, nil)
 		}
 
 		if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
-			return render(c, http.StatusForbidden, s.templates.RenderListAccessDeniedBytes, nil)
+			return render(c, http.StatusForbidden, s.templates.RenderListAccessDenied, nil)
 		}
 
 		return err
@@ -100,7 +100,7 @@ func (s Server) editList(c echo.Context) error {
 		Data: string(dataJSON),
 	}
 
-	return renderOK(c, s.templates.RenderListEditBytes, tmplParams)
+	return renderOK(c, s.templates.RenderListEdit, tmplParams)
 }
 
 func (s Server) validateEditForm(c echo.Context) (editListForm, bool, error) {
