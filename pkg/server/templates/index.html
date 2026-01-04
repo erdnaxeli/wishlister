@@ -1,14 +1,38 @@
 {{/* base: base.html */}}
 {{ define "content" }}
-<div>
-    <a href="/new">Créer une nouvelle liste de vœux</a>
-    <p>Cette liste de vœux pourra être consulté par toute personne disposant du lien.</p>
-</div>
-<div>
-    <a href="/group/new">Créer un groupe</a>
-    <p>
-        Vous pourrez inviter des personnes dans le groupe à l'aide de leur adresse email.
-        Chaque membre du groupe pourra créer sa liste de vœux et consulter celle des autres.
-    </p>
+<div class="row g-4 align-items-start">
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h3 class="card-title">Liste de vœux</h3>
+                <p class="card-text text-muted">
+                    Vous pouvez créer une liste et y ajouter des éléments que vous souhaitez recevoir en cadeau.
+                </p>
+                <p class="card-text text-muted">
+                    Cette liste pourra être consultée par toute personne disposant du lien.
+                </p>
+                <div class="mt-auto">
+                    <a href="/new" class="btn btn-primary">Créer une nouvelle liste de vœux</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h3 class="card-title">Groupe (fonctionnalité à venir)</h3>
+                <p class="card-text text-muted">
+                    Vous pouvez aussi créer un groupe.
+                </p>
+                <p class="card-text text-muted">
+                    Chaque personne invitée dans le groupe via son adresse email pourra créer sa propre liste de vœux et voir celles des autres membres du groupe.
+                </p>
+                <div class="mt-auto">
+                    <a href="/group/new" class="btn btn-primary disabled" aria-disabled="true">Créer un groupe</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {{ end }}
