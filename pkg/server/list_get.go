@@ -33,7 +33,7 @@ func (s Server) getWishList(c echo.Context) error {
 	} else {
 		list, err = s.wishlister.GetEditableWishList(ctx, params.ListID, params.AdminID)
 		if err != nil {
-			if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
+			if errors.Is(err, wishlister.ErrWishListInvalidAdminID) {
 				return c.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/%s", params.ListID))
 			}
 
