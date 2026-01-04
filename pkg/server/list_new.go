@@ -55,7 +55,7 @@ func (s Server) createNewWishList(c echo.Context) error {
 			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer",
 			Name:  form.Name,
 			User:  form.User,
-			Email: form.User,
+			Email: form.Email,
 		})
 	}
 

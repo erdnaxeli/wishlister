@@ -1,8 +1,10 @@
 -- name: GetWishList :one
 select
-    id,
+    wishlists.id,
     admin_id,
     group_id,
-    name
+    wishlists.name,
+    users.name as username
 from wishlists
-where id = ?;
+join users on wishlists.user_id = users.id
+where wishlists.id = ?;

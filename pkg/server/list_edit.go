@@ -55,11 +55,11 @@ func (s Server) editList(c echo.Context) error {
 		params.AdminID,
 	)
 	if err != nil {
-		if errors.Is(err, wishlister.WishListNotFoundError{}) {
+		if errors.Is(err, wishlister.ErrWishListNotFound) {
 			return render(c, http.StatusNotFound, s.templates.RenderListNotFound, nil)
 		}
 
-		if errors.Is(err, wishlister.WishListInvalidAdminIDError{}) {
+		if errors.Is(err, wishlister.ErrWishListInvalidAdminID) {
 			return render(c, http.StatusForbidden, s.templates.RenderListAccessDenied, nil)
 		}
 

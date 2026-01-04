@@ -12,19 +12,22 @@ import (
 
 const getWishList = `-- name: GetWishList :one
 select
-    id,
+    wishlists.id,
     admin_id,
     group_id,
-    name
+    wishlists.name,
+    users.name as username
 from wishlists
-where id = ?
+join users on wishlists.user_id = users.id
+where wishlists.id = ?
 `
 
 type GetWishListRow struct {
-	ID      string
-	AdminID string
-	GroupID sql.NullString
-	Name    string
+	ID       string
+	AdminID  string
+	GroupID  sql.NullString
+	Name     string
+	Username string
 }
 
 func (q *Queries) GetWishList(ctx context.Context, id string) (GetWishListRow, error) {
@@ -35,6 +38,7 @@ func (q *Queries) GetWishList(ctx context.Context, id string) (GetWishListRow, e
 		&i.AdminID,
 		&i.GroupID,
 		&i.Name,
+		&i.Username,
 	)
 	return i, err
 }

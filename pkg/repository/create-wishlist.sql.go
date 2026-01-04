@@ -12,10 +12,10 @@ import (
 
 const createWishList = `-- name: CreateWishList :exec
 insert into wishlists (
-    id, admin_id, name, group_id
+    id, admin_id, name, group_id, user_id
 )
 values (
-    ?, ?, ?, ?
+    ?, ?, ?, ?, ?
 )
 `
 
@@ -24,6 +24,7 @@ type CreateWishListParams struct {
 	AdminID string
 	Name    string
 	GroupID sql.NullString
+	UserID  string
 }
 
 func (q *Queries) CreateWishList(ctx context.Context, arg CreateWishListParams) error {
@@ -32,6 +33,7 @@ func (q *Queries) CreateWishList(ctx context.Context, arg CreateWishListParams) 
 		arg.AdminID,
 		arg.Name,
 		arg.GroupID,
+		arg.UserID,
 	)
 	return err
 }

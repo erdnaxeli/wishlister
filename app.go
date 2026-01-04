@@ -4,9 +4,7 @@ package wishlister
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
-	"log"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
@@ -24,15 +22,6 @@ type CreateWishlistParams struct {
 	UserEmail string
 }
 
-// ErrWishListNameEmpty is returned when the wish list name is empty.
-var ErrWishListNameEmpty = errors.New("wish list name cannot be empty")
-
-// ErrWishListUsernameEmpty is returned when the wish list username is empty.
-var ErrWishListUsernameEmpty = errors.New("wish list username cannot be empty")
-
-// ErrWishListUserEmailEmpty is returned when the wish list user email is empty.
-var ErrWishListUserEmailEmpty = errors.New("wish list user email cannot be empty")
-
 // CreateGroupParams represents the parameters to create a new group.
 type CreateGroupParams struct {
 	Name      string
@@ -43,9 +32,10 @@ type CreateGroupParams struct {
 type WishList struct {
 	ID string
 
-	Name    string
-	AdminID string
-	GroupID string
+	Name     string
+	AdminID  string
+	GroupID  string
+	Username string
 
 	Elements []WishListElement
 }
@@ -113,12 +103,12 @@ func New(emailSender email.Sender) (App, error) {
 func NewWithConfig(dbFile string, emailSender email.Sender) (App, error) {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		return nil, fmt.Errorf("Error while opening database: %w", err)
+		return nil, fmt.Errorf("error while opening database: %w", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("Error while pinging database: %w", err)
+		return nil, fmt.Errorf("error while pinging database: %w", err)
 	}
 
 	return &app{
@@ -146,94 +136,7 @@ func (a *app) CreateGroup(ctx context.Context, params CreateGroupParams) (string
 	return groupID, nil
 }
 
-func (a *app) CreateWishList(
-	ctx context.Context,
-	params CreateWishlistParams,
-) (listID string, adminID string, err error) {
-	if params.Name == "" {
-		return "", "", ErrWishListNameEmpty
-	}
-
-	if params.Username == "" {
-		return "", "", ErrWishListUsernameEmpty
-	}
-
-	if params.UserEmail == "" {
-		return "", "", ErrWishListUserEmailEmpty
-	}
-
-	listID, _ = nanoid.New()
-	adminID, _ = nanoid.New()
-
-	tx, err := a.db.BeginTx(ctx, nil)
-	if err != nil {
-		return "", "", err
-	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
-
-	qtx := a.queries.WithTx(tx)
-
-	err = qtx.CreateWishList(ctx, repository.CreateWishListParams{
-		ID:      listID,
-		AdminID: adminID,
-		Name:    params.Name,
-	})
-	if err != nil {
-		return "", "", err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return "", "", err
-	}
-
-	err = a.emailSender.SendNewWishListEmail(params.UserEmail, params.Username, listID, adminID)
-	if err != nil {
-		log.Print(err)
-	}
-
-	return listID, adminID, nil
-}
-
 func (a *app) GetGroup(_ context.Context, _ string) {}
-
-func (a *app) GetWishList(ctx context.Context, listID string) (WishList, error) {
-	wishList, err := a.getWishList(ctx, listID)
-	if err != nil {
-		return WishList{}, err
-	}
-
-	// hide admin ID
-	wishList.AdminID = ""
-	err = a.populateElements(ctx, &wishList)
-	if err != nil {
-		return WishList{}, err
-	}
-
-	return wishList, nil
-}
-
-func (a *app) GetEditableWishList(
-	ctx context.Context,
-	listID string,
-	adminID string,
-) (WishList, error) {
-	list, err := a.checkListEditAccess(ctx, listID, adminID)
-	if err != nil {
-		return WishList{}, err
-	}
-
-	err = a.populateElements(ctx, &list)
-	if err != nil {
-		return WishList{}, err
-	}
-
-	return list, nil
-}
 
 func (a *app) UpdateListElements(
 	ctx context.Context,
@@ -285,41 +188,6 @@ func (a *app) UpdateListElements(
 	}
 
 	return nil
-}
-
-func (a *app) checkListEditAccess(
-	ctx context.Context,
-	listID string,
-	adminID string,
-) (WishList, error) {
-	wishList, err := a.getWishList(ctx, listID)
-	if err != nil {
-		return WishList{}, err
-	}
-
-	if wishList.AdminID != adminID {
-		return WishList{}, WishListInvalidAdminIDError{}
-	}
-
-	return wishList, nil
-}
-
-func (a *app) getWishList(ctx context.Context, listID string) (WishList, error) {
-	list, err := a.queries.GetWishList(ctx, listID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return WishList{}, WishListNotFoundError{}
-		}
-		return WishList{}, err
-	}
-
-	wishList := WishList{
-		AdminID: list.AdminID,
-		ID:      list.ID,
-		Name:    list.Name,
-		GroupID: list.GroupID.String,
-	}
-	return wishList, nil
 }
 
 func (a *app) populateElements(ctx context.Context, list *WishList) error {
