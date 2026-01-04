@@ -23,7 +23,7 @@ func (s Server) createNewWishList(c echo.Context) error {
 	if err != nil {
 		s.e.Logger.Error("failed to bind create wish list form: ", err)
 
-		return renderOK(c, s.templates.RenderNewBytes, ParamsNew{
+		return renderOK(c, s.templates.RenderNew, ParamsNew{
 			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer.",
 			Name:  form.Name,
 			User:  form.User,
@@ -51,7 +51,7 @@ func (s Server) createNewWishList(c echo.Context) error {
 		// by the validation step before. So we just log and return a generic error.
 
 		s.e.Logger.Error("failed to create new wish list: ", err)
-		return renderOK(c, s.templates.RenderNewBytes, ParamsNew{
+		return renderOK(c, s.templates.RenderNew, ParamsNew{
 			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer",
 			Name:  form.Name,
 			User:  form.User,
@@ -78,7 +78,7 @@ func (s Server) handleNewWishListError(
 		s.e.Logger.Error("invalid validation error: ", err)
 
 		formError.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-		return renderOK(c, s.templates.RenderNewBytes, formError)
+		return renderOK(c, s.templates.RenderNew, formError)
 	}
 
 	var validationErrors validator.ValidationErrors
@@ -88,7 +88,7 @@ func (s Server) handleNewWishListError(
 
 	s.e.Logger.Error("unknown error during form validation: ", err)
 	formError.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-	return renderOK(c, s.templates.RenderNewBytes, formError)
+	return renderOK(c, s.templates.RenderNew, formError)
 }
 
 func (s Server) handleNewWishListValidationsErrors(
@@ -100,7 +100,7 @@ func (s Server) handleNewWishListValidationsErrors(
 		// that should not happend
 		s.e.Logger.Error("validation errors but length is 0")
 		formError.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-		return renderOK(c, s.templates.RenderNewBytes, formError)
+		return renderOK(c, s.templates.RenderNew, formError)
 	}
 
 	validationErr := validationErrors[0]
@@ -113,7 +113,7 @@ func (s Server) handleNewWishListValidationsErrors(
 		return s.handleNewWishListEmailError(c, formError, validationErr)
 	default:
 		s.e.Logger.Error("unknown validation error field: ", validationErr.Field())
-		return renderOK(c, s.templates.RenderNewBytes, formError)
+		return renderOK(c, s.templates.RenderNew, formError)
 	}
 }
 
@@ -135,7 +135,7 @@ func (s Server) handleNewWishListNameError(
 		formError.NameError = "Le nom est requis et doit faire moins de 255 caractères."
 	}
 
-	return renderOK(c, s.templates.RenderNewBytes, formError)
+	return renderOK(c, s.templates.RenderNew, formError)
 }
 
 func (s Server) handleNewWishListUserError(
@@ -156,7 +156,7 @@ func (s Server) handleNewWishListUserError(
 		formError.UserError = "Le nom d'utilisateur est requis et doit faire moins de 255 caractères."
 	}
 
-	return renderOK(c, s.templates.RenderNewBytes, formError)
+	return renderOK(c, s.templates.RenderNew, formError)
 }
 
 func (s Server) handleNewWishListEmailError(
@@ -179,5 +179,5 @@ func (s Server) handleNewWishListEmailError(
 		formError.EmailError = "L'adresse email est requise et doit faire moins de 255 caractères."
 	}
 
-	return renderOK(c, s.templates.RenderNewBytes, formError)
+	return renderOK(c, s.templates.RenderNew, formError)
 }
