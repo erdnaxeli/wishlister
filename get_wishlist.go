@@ -67,10 +67,11 @@ func (a *app) getWishList(ctx context.Context, listID string) (WishList, error) 
 	}
 
 	wishList := WishList{
-		AdminID: list.AdminID,
-		ID:      list.ID,
-		Name:    list.Name,
-		GroupID: list.GroupID.String,
+		AdminID:  list.AdminID,
+		ID:       list.ID,
+		Name:     list.Name,
+		GroupID:  list.GroupID.String,
+		Username: list.Username,
 	}
 	return wishList, nil
 }

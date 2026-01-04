@@ -10,17 +10,20 @@
     <form method="POST" class="row g-3">
         <div class="col-12">
             <label for="name" class="form-label">Nom de la liste</label>
-            <input type="text" class="form-control{{ if .NameError }} is-invalid{{ end }}" name="name" id="name" value="{{ .Name }}" />
+            <input type="text" class="form-control{{ if .NameError }} is-invalid{{ end }}" name="name" id="name"
+                value="{{ .Name }}" placeholder="Pour mon anniversaire" />
             {{ if .NameError }}<div class="invalid-feedback">{{ .NameError }}</div>{{ end }}
         </div>
         <div class="col-md-6">
             <label for="user" class="form-label">Nom d'utilisateur</label>
-            <input type="text" class="form-control{{ if .UserError }} is-invalid{{ end }}" name="user" id="user" value="{{ .User }}" />
+            <input type="text" class="form-control{{ if .UserError }} is-invalid{{ end }}" name="user" id="user"
+                value="{{ .User }}" placeholder="George" />
             {{ if .UserError }}<div class="invalid-feedback">{{ .UserError }}</div>{{ end }}
         </div>
         <div class="col-md-6">
             <label for="email" class="form-label">Adresse email (optionnel)</label>
-            <input type="email" class="form-control{{ if .EmailError }} is-invalid{{ end }}" name="email" id="email" value="{{ .Email }}" />
+            <input type="email" class="form-control{{ if .EmailError }} is-invalid{{ end }}" name="email" id="email"
+                value="{{ .Email }}" placeholder="george@example.org" />
             {{ if .EmailError }}<div class="invalid-feedback">{{ .EmailError }}</div>{{ end }}
             <div class="form-text">
                 Cela permet de recevoir le lien de la liste de vœux par email et de la retrouver si vous l'avez perdue.

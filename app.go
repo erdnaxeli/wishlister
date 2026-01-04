@@ -32,9 +32,10 @@ type CreateGroupParams struct {
 type WishList struct {
 	ID string
 
-	Name    string
-	AdminID string
-	GroupID string
+	Name     string
+	AdminID  string
+	GroupID  string
+	Username string
 
 	Elements []WishListElement
 }
