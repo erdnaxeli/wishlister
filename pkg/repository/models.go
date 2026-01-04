@@ -16,13 +16,13 @@ type Group struct {
 type User struct {
 	ID    string
 	Name  string
-	Email sql.NullString
+	Email string
 }
 
 type Wishlist struct {
 	ID      string
 	AdminID string
-	UserID  sql.NullString
+	UserID  string
 	Name    string
 	GroupID sql.NullString
 }

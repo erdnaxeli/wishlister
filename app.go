@@ -102,12 +102,12 @@ func New(emailSender email.Sender) (App, error) {
 func NewWithConfig(dbFile string, emailSender email.Sender) (App, error) {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		return nil, fmt.Errorf("Error while opening database: %w", err)
+		return nil, fmt.Errorf("error while opening database: %w", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("Error while pinging database: %w", err)
+		return nil, fmt.Errorf("error while pinging database: %w", err)
 	}
 
 	return &app{
