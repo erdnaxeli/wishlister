@@ -56,9 +56,9 @@ type App interface {
 	// Return the group id.
 	CreateGroup(ctx context.Context, params CreateGroupParams) (string, error)
 
-	// Create a new wish list.
+	// Create a new wishlist.
 	//
-	// Return the wish list id.
+	// Return the wishlist id and the admin id.
 	CreateWishList(ctx context.Context, params CreateWishlistParams) (string, string, error)
 	GetGroup(ctx context.Context, groupID string)
 
@@ -73,8 +73,8 @@ type App interface {
 	//
 	// This method check that the adminId token is the correct one for this wishlist.
 	//
-	// If the wishlist is not found, an error WishListNotFoundError is returned.
-	// If the adminId token is incorrect, an error WishListInvalidAdminIdError is returned.
+	// If the wishlist is not found, an error ErrWishListNotFound is returned.
+	// If the adminId token is incorrect, an error ErrWishListInvalidAdminId is returned.
 	GetEditableWishList(ctx context.Context, listID string, adminID string) (WishList, error)
 
 	UpdateListElements(
@@ -83,6 +83,11 @@ type App interface {
 		adminID string,
 		elements []WishListElement,
 	) error
+
+	// SendMagicLink sends a magic link to the given email address.
+	//
+	// The link can be used to login the user.
+	SendMagicLink(ctx context.Context, email string) error
 }
 
 type app struct {
@@ -185,26 +190,6 @@ func (a *app) UpdateListElements(
 	err = tx.Commit()
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (a *app) populateElements(ctx context.Context, list *WishList) error {
-	elements, err := a.queries.GetWishListElements(ctx, list.ID)
-	if err != nil {
-		return err
-	}
-
-	for _, element := range elements {
-		list.Elements = append(
-			list.Elements,
-			WishListElement{
-				Name:        element.Name,
-				Description: element.Description.String,
-				URL:         element.Url.String,
-			},
-		)
 	}
 
 	return nil

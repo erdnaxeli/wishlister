@@ -9,10 +9,14 @@ import (
 
 func (s Server) setRoutes() {
 	s.e.GET("/", renderOKFunc(s.templates.RenderIndex, nil))
-	s.e.GET("/new", renderOKFunc(s.templates.RenderNew, nil))
-	s.e.GET("/group/new", renderOKFunc(s.templates.RenderNewGroup, nil))
 
+	s.e.GET("/login", renderOKFunc(s.templates.RenderLogin, nil))
+	s.e.POST("/login", s.sendMagicLink)
+
+	s.e.GET("/new", renderOKFunc(s.templates.RenderNew, nil))
 	s.e.POST("/new", s.createNewWishList)
+
+	s.e.GET("/group/new", renderOKFunc(s.templates.RenderNewGroup, nil))
 	s.e.POST("/group/new", s.createNewGroup)
 
 	s.e.GET("/l/:listID", s.getWishList)

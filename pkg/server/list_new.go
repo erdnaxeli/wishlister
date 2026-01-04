@@ -49,7 +49,6 @@ func (s Server) createNewWishList(c echo.Context) error {
 	if err != nil {
 		// We could get errors about empty fields here, but this should have been catched
 		// by the validation step before. So we just log and return a generic error.
-
 		s.e.Logger.Error("failed to create new wish list: ", err)
 		return renderOK(c, s.templates.RenderNew, ParamsNew{
 			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer",

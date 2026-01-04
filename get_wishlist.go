@@ -75,3 +75,23 @@ func (a *app) getWishList(ctx context.Context, listID string) (WishList, error) 
 	}
 	return wishList, nil
 }
+
+func (a *app) populateElements(ctx context.Context, list *WishList) error {
+	elements, err := a.queries.GetWishListElements(ctx, list.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, element := range elements {
+		list.Elements = append(
+			list.Elements,
+			WishListElement{
+				Name:        element.Name,
+				Description: element.Description.String,
+				URL:         element.Url.String,
+			},
+		)
+	}
+
+	return nil
+}

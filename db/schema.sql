@@ -24,3 +24,8 @@ create table users (
     name TEXT not null,
     email TEXT unique not null
 ) strict;
+
+create table user_sessions (
+    id TEXT primary key,
+    user_id TEXT not null references users (id)
+) strict;
