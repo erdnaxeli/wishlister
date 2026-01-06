@@ -23,11 +23,13 @@
                         {{ range .Lists }}
                         <tr>
                             <td class="align-middle position-relative">{{ .Name }}
-                                <a href="/l/{{ .ID }}/{{ .AdminID }}" class="stretched-link text-decoration-none" aria-label="Voir la liste"></a>
+                                <a href="/l/{{ .ID }}/{{ .AdminID }}" class="stretched-link text-decoration-none"
+                                    aria-label="Voir la liste"></a>
                             </td>
                             <td class="text-end align-middle">
                                 {{ if .AdminID }}
-                                <a href="/l/{{ .ID }}/{{ .AdminID }}/edit" class="btn btn-sm btn-outline-secondary">Éditer</a>
+                                <a href="/l/{{ .ID }}/{{ .AdminID }}/edit"
+                                    class="btn btn-sm btn-outline-secondary">Éditer</a>
                                 {{ end }}
                             </td>
                         </tr>
