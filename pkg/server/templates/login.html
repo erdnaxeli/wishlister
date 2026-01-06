@@ -1,0 +1,40 @@
+{{/* base: base.html */}}
+{{ define "content" }}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h3 class="card-title">Connexion par lien magique</h3>
+                <p class="text-muted">
+                    Entrez votre adresse email. Vous recevrez un lien magique vous permettant de vous authentifier sans
+                    mot de passe.
+                </p>
+
+                {{ if .Error }}
+                <div class="alert alert-danger" role="alert">{{ .Error }}</div>
+                {{ end }}
+
+                {{ if .Sent}}
+                <div class="alert alert-success" role="alert">
+                    Un email contenant le lien de connexion a été envoyé à {{ .Email }}.
+                </div>
+                {{ else }}
+                <form method="POST" class="row g-3">
+                    <div class="col-12">
+                        <label for="email" class="form-label">Adresse email</label>
+                        <input type="email" name="email" id="email"
+                            class="form-control{{ if .EmailError }} is-invalid{{ end }}" value="{{ .Email }}" />
+                        {{ if .EmailError }}<div class="invalid-feedback">{{ .EmailError }}</div>{{ end }}
+                        <div class="form-text">Un lien de connexion sera envoyé à cette adresse.</div>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Envoyer le lien magique</button>
+                    </div>
+                </form>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

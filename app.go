@@ -28,6 +28,12 @@ type CreateGroupParams struct {
 	UserEmail string
 }
 
+// Session represents a user session.
+type Session struct {
+	UserID    string
+	SessionID string
+}
+
 // WishList represents a wishlist.
 type WishList struct {
 	ID string
@@ -56,9 +62,9 @@ type App interface {
 	// Return the group id.
 	CreateGroup(ctx context.Context, params CreateGroupParams) (string, error)
 
-	// Create a new wish list.
+	// Create a new wishlist.
 	//
-	// Return the wish list id.
+	// Return the wishlist id and the admin id.
 	CreateWishList(ctx context.Context, params CreateWishlistParams) (string, string, error)
 	GetGroup(ctx context.Context, groupID string)
 
@@ -73,16 +79,40 @@ type App interface {
 	//
 	// This method check that the adminId token is the correct one for this wishlist.
 	//
-	// If the wishlist is not found, an error WishListNotFoundError is returned.
-	// If the adminId token is incorrect, an error WishListInvalidAdminIdError is returned.
+	// If the wishlist is not found, an error ErrWishListNotFound is returned.
+	// If the adminId token is incorrect, an error ErrWishListInvalidAdminId is returned.
 	GetEditableWishList(ctx context.Context, listID string, adminID string) (WishList, error)
 
+	// GetUserWishLists returns all wishlists for a given user.
+	//
+	// Elements are not included in the returned wishlists.
+	GetUserWishLists(ctx context.Context, userID string) ([]WishList, error)
+
+	// UpdateListElements updates the elements of a wishlist.
+	//
+	// This method check that the adminId token is the correct one for this wishlist.
+	//
+	// If the wishlist is not found, an error ErrWishListNotFound is returned.
+	// If the adminId token is incorrect, an error ErrWishListInvalidAdminId is returned.
+	//
+	// The elements parameter is the full list of elements to set on the wishlist.
+	// Existing elements are deleted and replaced by the new ones.
 	UpdateListElements(
 		ctx context.Context,
 		listID string,
 		adminID string,
 		elements []WishListElement,
 	) error
+
+	// SendMagicLink sends a magic link to the given email address.
+	//
+	// The link can be used to login the user.
+	SendMagicLink(ctx context.Context, email string) error
+
+	// GetSession returns the user id associated with the given session id.
+	//
+	// If the session is not found, an error ErrSessionNotFound is returned.
+	GetSession(ctx context.Context, sessionID string) (Session, error)
 }
 
 type app struct {
@@ -185,26 +215,6 @@ func (a *app) UpdateListElements(
 	err = tx.Commit()
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (a *app) populateElements(ctx context.Context, list *WishList) error {
-	elements, err := a.queries.GetWishListElements(ctx, list.ID)
-	if err != nil {
-		return err
-	}
-
-	for _, element := range elements {
-		list.Elements = append(
-			list.Elements,
-			WishListElement{
-				Name:        element.Name,
-				Description: element.Description.String,
-				URL:         element.Url.String,
-			},
-		)
 	}
 
 	return nil

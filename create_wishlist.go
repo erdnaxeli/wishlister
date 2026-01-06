@@ -28,14 +28,38 @@ func (a *app) CreateWishList(
 	listID, _ = nanoid.New()
 	adminID, _ = nanoid.New()
 
-	userID, err := a.getOrCreateUser(ctx, params.Username, params.UserEmail)
+	userID, err := a.GetOrCreateUser(
+		ctx,
+		params.Username,
+		params.UserEmail,
+	)
 	if err != nil {
 		return "", "", err
 	}
 
-	tx, err := a.db.BeginTx(ctx, nil)
+	err = a.createWishList(ctx, listID, adminID, params.Name, userID)
 	if err != nil {
 		return "", "", err
+	}
+
+	err = a.emailSender.SendNewWishListEmail(params.UserEmail, params.Username, listID, adminID)
+	if err != nil {
+		log.Print(err)
+	}
+
+	return listID, adminID, nil
+}
+
+func (a *app) createWishList(
+	ctx context.Context,
+	listID string,
+	adminID string,
+	name string,
+	userID string,
+) error {
+	tx, err := a.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
 	}
 	defer func() {
 		if err != nil {
@@ -47,22 +71,17 @@ func (a *app) CreateWishList(
 	err = qtx.CreateWishList(ctx, repository.CreateWishListParams{
 		ID:      listID,
 		AdminID: adminID,
-		Name:    params.Name,
+		Name:    name,
 		UserID:  userID,
 	})
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	err = a.emailSender.SendNewWishListEmail(params.UserEmail, params.Username, listID, adminID)
-	if err != nil {
-		log.Print(err)
-	}
-
-	return listID, adminID, nil
+	return nil
 }

@@ -38,7 +38,7 @@ func main() {
 			cfg.EmailPassword,
 			"mail.infomaniak.fr",
 			465,
-			"contact@malistedevoeux.fr",
+			"\"Ma liste de voeux.fr\" <contact@malistedevoeux.fr>",
 		)
 	}
 

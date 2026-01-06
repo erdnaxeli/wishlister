@@ -19,6 +19,11 @@ type User struct {
 	Email string
 }
 
+type UserSession struct {
+	ID     string
+	UserID string
+}
+
 type Wishlist struct {
 	ID      string
 	AdminID string
