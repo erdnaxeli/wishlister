@@ -45,7 +45,7 @@ func (s smtpSender) getMagicLinkMailBody(
 					Button: hermes.Button{
 						Text: "Se connecter",
 						Link: fmt.Sprintf(
-							"https://www.malistedevoeux.fr/login/%s",
+							"https://www.malistedevoeux.fr/login/magic/%s",
 							sessionID,
 						),
 					},
