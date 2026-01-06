@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
@@ -33,60 +32,26 @@ func (a *app) GetOrCreateUser(
 	return user.ID, nil
 }
 
-// GetOrCreateUserSession retrieves an existing session by sessionID or creates a new one.
-//
-// If sessionID is empty, a new session is created.
-// If sessionID is not empty and not found, a new session is created.
-// If sessionID is not empty and found:
-//   - if the session belongs to the user, nothing is done.
-//   - if the session does not belong to the user, a new session is created and the old one is deleted.
-//
-// It returns the (same or newly created) session ID.
-func (a *app) GetOrCreateUserSession(
-	ctx context.Context,
-	userID string,
-	sessionID string,
-) (string, error) {
-	if sessionID != "" {
-		return a.createUserSession(ctx, userID)
-	}
-
-	session, err := a.queries.GetUserSession(ctx, sessionID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return a.createUserSession(ctx, userID)
-		}
-
-		return "", err
-	}
-
-	if session.UserID == userID {
-		return sessionID, nil
-	}
-
-	err = a.queries.DeleteUserSession(ctx, sessionID)
-	if err != nil {
-		// Log the error but continue as we can create a new session anyway
-		log.Printf("error while deleting user session %s", sessionID)
-	}
-
-	return a.createUserSession(ctx, userID)
-}
-
 func (a *app) createUserSession(
 	ctx context.Context,
 	userID string,
-) (string, error) {
+) (Session, error) {
 	sessionID, _ := nanoid.New()
+	magicLinkToken, _ := nanoid.New()
 	err := a.queries.CreateUserSession(ctx, repository.CreateUserSessionParams{
-		ID:     sessionID,
-		UserID: userID,
+		ID:             sessionID,
+		UserID:         userID,
+		MagicLinkToken: NewNullString(magicLinkToken),
 	})
 	if err != nil {
-		return "", err
+		return Session{}, err
 	}
 
-	return sessionID, nil
+	return Session{
+		UserID:         userID,
+		SessionID:      sessionID,
+		MagicLinkToken: magicLinkToken,
+	}, nil
 }
 
 func (a *app) SendMagicLink(ctx context.Context, email string) error {
@@ -95,16 +60,36 @@ func (a *app) SendMagicLink(ctx context.Context, email string) error {
 		return err
 	}
 
-	sessionID, err := a.createUserSession(ctx, userID)
+	session, err := a.createUserSession(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	return a.emailSender.SendMagicLink(email, sessionID)
+	return a.emailSender.SendMagicLink(email, session.MagicLinkToken)
 }
 
 func (a *app) GetSession(ctx context.Context, sessionID string) (Session, error) {
 	session, err := a.queries.GetUserSession(ctx, sessionID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Session{}, ErrSessionNotFound
+		}
+
+		return Session{}, err
+	}
+
+	return Session{
+		UserID:    session.UserID,
+		SessionID: session.ID,
+	}, nil
+}
+
+// GetSessionByMagicLink returns the session associated with the given magic link token.
+//
+// If the session is not found, an error ErrSessionNotFound is returned.
+// Once used, the magic link token is invalidated and cannot be used again.
+func (a *app) GetSessionByMagicLink(ctx context.Context, token string) (Session, error) {
+	session, err := a.queries.GetUserSessionByMagicLink(ctx, NewNullString(token))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Session{}, ErrSessionNotFound

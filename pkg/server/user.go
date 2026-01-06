@@ -97,8 +97,8 @@ func (s Server) handleSendMagicLinkError(
 }
 
 func (s Server) handleMagicLink(c echo.Context) error {
-	sessionID := c.Param("token")
-	session, err := s.wishlister.GetSession(c.Request().Context(), sessionID)
+	token := c.Param("token")
+	session, err := s.wishlister.GetSessionByMagicLink(c.Request().Context(), token)
 	if err != nil {
 		s.e.Logger.Error("failed to get session from magic link: ", err)
 		return renderOK(c, s.templates.RenderLogin, ParamsLogin{
