@@ -102,3 +102,19 @@ func (a *app) SendMagicLink(ctx context.Context, email string) error {
 
 	return a.emailSender.SendMagicLink(email, sessionID)
 }
+
+func (a *app) GetSession(ctx context.Context, sessionID string) (Session, error) {
+	session, err := a.queries.GetUserSession(ctx, sessionID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Session{}, ErrSessionNotFound
+		}
+
+		return Session{}, err
+	}
+
+	return Session{
+		UserID:    session.UserID,
+		SessionID: session.ID,
+	}, nil
+}

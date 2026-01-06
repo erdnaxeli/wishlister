@@ -17,3 +17,6 @@ var ErrWishListUsernameEmpty = errors.New("wishlist username cannot be empty")
 
 // ErrWishListUserEmailEmpty is returned when the wishlist user email is empty.
 var ErrWishListUserEmailEmpty = errors.New("wishlist user email cannot be empty")
+
+// ErrSessionNotFound is returned when a session cannot be found.
+var ErrSessionNotFound = errors.New("session not found")

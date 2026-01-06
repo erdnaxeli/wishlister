@@ -1,0 +1,42 @@
+{{/* base: base.html */}}
+{{ define "content" }}
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Mes listes de vœux</h2>
+        <a href="/new" class="btn btn-sm btn-primary">Nouvelle liste</a>
+    </div>
+
+    {{ if not .Lists }}
+    <div class="alert alert-info">Vous n'avez aucune liste pour le moment.</div>
+    {{ else }}
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range .Lists }}
+                        <tr>
+                            <td class="align-middle position-relative">{{ .Name }}
+                                <a href="/l/{{ .ID }}/{{ .AdminID }}" class="stretched-link text-decoration-none" aria-label="Voir la liste"></a>
+                            </td>
+                            <td class="text-end align-middle">
+                                {{ if .AdminID }}
+                                <a href="/l/{{ .ID }}/{{ .AdminID }}/edit" class="btn btn-sm btn-outline-secondary">Éditer</a>
+                                {{ end }}
+                            </td>
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{ end }}
