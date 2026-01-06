@@ -20,8 +20,9 @@ type User struct {
 }
 
 type UserSession struct {
-	ID     string
-	UserID string
+	ID             string
+	UserID         string
+	MagicLinkToken sql.NullString
 }
 
 type Wishlist struct {

@@ -27,5 +27,6 @@ create table users (
 
 create table user_sessions (
     id TEXT primary key,
-    user_id TEXT not null references users (id)
+    user_id TEXT not null references users (id),
+    magic_link_token TEXT unique
 ) strict;

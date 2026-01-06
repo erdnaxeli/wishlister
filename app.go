@@ -30,8 +30,9 @@ type CreateGroupParams struct {
 
 // Session represents a user session.
 type Session struct {
-	UserID    string
-	SessionID string
+	UserID         string
+	SessionID      string
+	MagicLinkToken string
 }
 
 // WishList represents a wishlist.
@@ -113,6 +114,12 @@ type App interface {
 	//
 	// If the session is not found, an error ErrSessionNotFound is returned.
 	GetSession(ctx context.Context, sessionID string) (Session, error)
+
+	// GetSessionByMagicLink returns the user id associated with the given magic link token.
+	//
+	// If the session is not found, an error ErrSessionNotFound is returned.
+	// Once used, the magic link token is invalidated and cannot be used again.
+	GetSessionByMagicLink(ctx context.Context, token string) (Session, error)
 }
 
 type app struct {

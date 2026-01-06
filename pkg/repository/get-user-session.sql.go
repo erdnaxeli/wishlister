@@ -17,9 +17,14 @@ from user_sessions
 where id = ?
 `
 
-func (q *Queries) GetUserSession(ctx context.Context, id string) (UserSession, error) {
+type GetUserSessionRow struct {
+	ID     string
+	UserID string
+}
+
+func (q *Queries) GetUserSession(ctx context.Context, id string) (GetUserSessionRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserSession, id)
-	var i UserSession
+	var i GetUserSessionRow
 	err := row.Scan(&i.ID, &i.UserID)
 	return i, err
 }

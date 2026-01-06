@@ -7,19 +7,21 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createUserSession = `-- name: CreateUserSession :exec
-insert into user_sessions (id, user_id)
-values (?, ?)
+insert into user_sessions (id, user_id, magic_link_token)
+values (?, ?, ?)
 `
 
 type CreateUserSessionParams struct {
-	ID     string
-	UserID string
+	ID             string
+	UserID         string
+	MagicLinkToken sql.NullString
 }
 
 func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionParams) error {
-	_, err := q.db.ExecContext(ctx, createUserSession, arg.ID, arg.UserID)
+	_, err := q.db.ExecContext(ctx, createUserSession, arg.ID, arg.UserID, arg.MagicLinkToken)
 	return err
 }
