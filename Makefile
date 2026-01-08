@@ -28,9 +28,9 @@ style:
 
 build-docker-image:
 ifndef VERSION
-	$(error The variable VERSION must be defined)
+	$(error The variable VERSION must be defined)
 endif
-	docker build -t ghcr.io/erdnaxeli/wishlister:${VERSION} .
+	docker build --build-arg VERSION=${VERSION} -t ghcr.io/erdnaxeli/wishlister:${VERSION} .
 
 publish: build-docker-image
 	docker push ghcr.io/erdnaxeli/wishlister:${VERSION}
