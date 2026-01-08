@@ -19,7 +19,7 @@
 
                     <div class="col-md-6">
                         <label :for="`Elements-${index}-Description`" class="form-label">Description
-                            (optionnelle)</label>
+                            (optionnel)</label>
                         <input type="text" :name="`Elements[${index}].Description`"
                             :id="`Elements-${index}-Description`" x-model="data[index]['description']"
                             class="form-control" x-bind:class="{ 'is-invalid': data[index]['description_error'] }"
