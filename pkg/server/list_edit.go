@@ -177,7 +177,8 @@ func (s Server) validateElement(element editListFormElement, ok bool) (editListF
 	}
 
 	if element.URL != "" {
-		if err := s.validate.Var(element.URL, "startswith=https://|startswith=http://,url"); err != nil {
+		err := s.validate.Var(element.URL, "startswith=https://|startswith=http://,url")
+		if err != nil {
 			element.URLError = "L'URL n'est pas valide."
 			ok = false
 		} else if utf8.RuneCountInString(element.URL) > 2000 {
