@@ -5,7 +5,7 @@ WORKDIR /src
 COPY . .
 RUN go build -o /src/server ./cmd/server
 
-FROM cgr.dev/chainguard/static:latest@sha256:1ff7590cbc50eaaa917c34b092de0720d307f67d6d795e4f749a0b80a2e95a2c
+FROM cgr.dev/chainguard/static:latest@sha256:a301031ffd4ed67f35ca7fa6cf3dad9937b5fa47d7493955a18d9b4ca5412d1a
 
 WORKDIR /app
 COPY --from=build /src/server /app/server
