@@ -21,10 +21,6 @@ func (a *app) CreateWishList(
 		return "", "", ErrWishListUsernameEmpty
 	}
 
-	if params.UserEmail == "" {
-		return "", "", ErrWishListUserEmailEmpty
-	}
-
 	listID, _ = nanoid.New()
 	adminID, _ = nanoid.New()
 
