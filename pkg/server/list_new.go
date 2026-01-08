@@ -17,6 +17,21 @@ type createWishListForm struct {
 	Email string `form:"email" validate:"omitempty,email,max=255"`
 }
 
+func (s Server) getNewWishList(c echo.Context) error {
+	params := ParamsNew{}
+
+	sessionIDCookie, err := c.Cookie("session_id")
+	if err == nil {
+		session, err := s.wishlister.GetSession(c.Request().Context(), sessionIDCookie.Value)
+		if err == nil {
+			params.User = session.Username
+			params.Email = session.UserEmail
+		}
+	}
+
+	return renderOK(c, s.templates.RenderNew, params)
+}
+
 func (s Server) createNewWishList(c echo.Context) error {
 	form := createWishListForm{}
 	err := c.Bind(&form)

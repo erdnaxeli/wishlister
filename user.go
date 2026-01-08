@@ -80,6 +80,8 @@ func (a *app) GetSession(ctx context.Context, sessionID string) (Session, error)
 
 	return Session{
 		UserID:    session.UserID,
+		Username:  session.Username,
+		UserEmail: session.UserEmail,
 		SessionID: session.ID,
 	}, nil
 }
