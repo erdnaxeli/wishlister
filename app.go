@@ -31,6 +31,8 @@ type CreateGroupParams struct {
 // Session represents a user session.
 type Session struct {
 	UserID         string
+	Username       string
+	UserEmail      string
 	SessionID      string
 	MagicLinkToken string
 }

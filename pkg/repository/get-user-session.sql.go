@@ -11,20 +11,30 @@ import (
 
 const getUserSession = `-- name: GetUserSession :one
 select
-    id,
-    user_id
+    user_sessions.id,
+    user_id,
+    users.name as username,
+    users.email as user_email
 from user_sessions
-where id = ?
+join users on users.id = user_sessions.user_id
+where user_sessions.id = ?
 `
 
 type GetUserSessionRow struct {
-	ID     string
-	UserID string
+	ID        string
+	UserID    string
+	Username  string
+	UserEmail string
 }
 
 func (q *Queries) GetUserSession(ctx context.Context, id string) (GetUserSessionRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserSession, id)
 	var i GetUserSessionRow
-	err := row.Scan(&i.ID, &i.UserID)
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Username,
+		&i.UserEmail,
+	)
 	return i, err
 }

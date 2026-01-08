@@ -15,7 +15,7 @@ func (s Server) setRoutes() {
 	s.e.GET("/login/magic/:token", s.handleMagicLink)
 	s.e.GET("/lists", s.getUserWishLists)
 
-	s.e.GET("/new", renderOKFunc(s.templates.RenderNew, nil))
+	s.e.GET("/new", s.getNewWishList)
 	s.e.POST("/new", s.createNewWishList)
 
 	s.e.GET("/group/new", renderOKFunc(s.templates.RenderNewGroup, nil))

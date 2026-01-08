@@ -1,6 +1,9 @@
 -- name: GetUserSession :one
 select
-    id,
-    user_id
+    user_sessions.id,
+    user_id,
+    users.name as username,
+    users.email as user_email
 from user_sessions
-where id = ?;
+join users on users.id = user_sessions.user_id
+where user_sessions.id = ?;
