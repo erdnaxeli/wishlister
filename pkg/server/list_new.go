@@ -14,7 +14,7 @@ import (
 type createWishListForm struct {
 	Name  string `form:"name"  validate:"required,max=255"`
 	User  string `form:"user"  validate:"required,max=255"`
-	Email string `form:"email" validate:"email,max=255"`
+	Email string `form:"email" validate:"omitempty,email,max=255"`
 }
 
 func (s Server) createNewWishList(c echo.Context) error {
