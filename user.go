@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
@@ -104,4 +105,13 @@ func (a *app) GetSessionByMagicLink(ctx context.Context, token string) (Session,
 		UserID:    session.UserID,
 		SessionID: session.ID,
 	}, nil
+}
+
+func (a *app) DeleteSession(ctx context.Context, sessionID string) {
+	err := a.queries.DeleteUserSession(ctx, sessionID)
+	if err != nil {
+		// We just log the error, as the user can still be logged out even if the session
+		// still exists.
+		log.Printf("Error while deleting session %s", sessionID)
+	}
 }

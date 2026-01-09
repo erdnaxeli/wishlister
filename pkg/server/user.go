@@ -110,13 +110,17 @@ func (s Server) handleMagicLink(c echo.Context) error {
 	return c.Redirect(302, "/lists")
 }
 
-func (s Server) setUserSessionCookie(c echo.Context, sessionID string) {
+func (s Server) setUserSessionCookie(c echo.Context, sessionID string, expire ...bool) {
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionID,
 		Path:     "/",
 		Secure:   true,
 		HttpOnly: true,
+	}
+
+	if len(expire) > 0 && expire[0] {
+		cookie.MaxAge = -1
 	}
 
 	c.SetCookie(cookie)
@@ -151,4 +155,14 @@ func (s Server) getUserWishLists(c echo.Context) error {
 		})
 	}
 	return renderOK(c, s.templates.RenderUserListsView, params)
+}
+
+func (s Server) logout(c echo.Context) error {
+	sessionIDCookie, err := c.Cookie("session_id")
+	if err == nil {
+		s.wishlister.DeleteSession(c.Request().Context(), sessionIDCookie.Value)
+	}
+
+	s.setUserSessionCookie(c, "", true)
+	return renderOK(c, s.templates.RenderLogout, nil)
 }
