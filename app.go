@@ -122,6 +122,9 @@ type App interface {
 	// If the session is not found, an error ErrSessionNotFound is returned.
 	// Once used, the magic link token is invalidated and cannot be used again.
 	GetSessionByMagicLink(ctx context.Context, token string) (Session, error)
+
+	// DeleteSession deletes the given session.
+	DeleteSession(ctx context.Context, sessionID string)
 }
 
 type app struct {

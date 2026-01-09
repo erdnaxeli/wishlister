@@ -3,7 +3,10 @@
 <div class="mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Mes listes de vœux</h2>
-        <a href="/new" class="btn btn-sm btn-primary">Nouvelle liste</a>
+            <div class="d-flex gap-2">
+                <a href="/new" class="btn btn-sm btn-primary">Nouvelle liste</a>
+                <a href="/logout" class="btn btn-sm btn-outline-secondary">Se déconnecter</a>
+            </div>
     </div>
 
     {{ if not .Lists }}
