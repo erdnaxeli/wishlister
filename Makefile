@@ -18,6 +18,9 @@ generate-templates:
 	go run statictemplates/cmd/main.go pkg/server/templates/ server pkg/server/
 
 run:
+	./server
+
+watch:
 	go tool modd
 
 style:
