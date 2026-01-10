@@ -134,21 +134,9 @@ type app struct {
 	emailSender email.Sender
 }
 
-// New returns an App object with the default config.
-func New(emailSender email.Sender) (App, error) {
-	return NewWithConfig("db.sqlite", emailSender)
-}
-
-// NewWithConfig returns an App object with a specific config.
-//
-// dbFile is the path to the sqlite db file.
-func NewWithConfig(dbFile string, emailSender email.Sender) (App, error) {
-	db, err := sql.Open("sqlite", dbFile)
-	if err != nil {
-		return nil, fmt.Errorf("error while opening database: %w", err)
-	}
-
-	err = db.Ping()
+// NewWithConfig returns a new App instance.
+func NewWithConfig(db *sql.DB, emailSender email.Sender) (App, error) {
+	err := db.Ping()
 	if err != nil {
 		return nil, fmt.Errorf("error while pinging database: %w", err)
 	}
