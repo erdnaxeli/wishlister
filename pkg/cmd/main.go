@@ -9,10 +9,12 @@ import (
 
 	"github.com/caarlos0/env/v11"
 
+	"github.com/erdnaxeli/migrator"
 	"github.com/erdnaxeli/wishlister"
-	"github.com/erdnaxeli/wishlister/migrator"
 	"github.com/erdnaxeli/wishlister/pkg/email"
 	"github.com/erdnaxeli/wishlister/pkg/server"
+
+	_ "modernc.org/sqlite"
 )
 
 type config struct {
