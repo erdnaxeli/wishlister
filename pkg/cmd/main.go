@@ -3,19 +3,23 @@ package main
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 
 	"github.com/caarlos0/env/v11"
-
 	"github.com/erdnaxeli/migrator"
+
 	"github.com/erdnaxeli/wishlister"
 	"github.com/erdnaxeli/wishlister/pkg/email"
 	"github.com/erdnaxeli/wishlister/pkg/server"
 
 	_ "modernc.org/sqlite"
 )
+
+//go:embed migrations/*.sql
+var migrations embed.FS
 
 type config struct {
 	Email         string `env:"EMAIL"`
@@ -53,14 +57,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Print("Starting application")
-
-	app, err := wishlister.NewWithConfig(db, mailSender)
+	err = runServer(db, mailSender)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	server.New(server.Config{Wishlister: app}).Run()
 }
 
 func openDB() (*sql.DB, error) {
@@ -71,11 +71,13 @@ func openDB() (*sql.DB, error) {
 		return nil, fmt.Errorf("error while opening database: %w", err)
 	}
 
-	defer func() { _ = db.Close() }()
 	log.Print("Applying migrations")
 
-	directory := os.DirFS("db/migrations")
-	migrator, err := migrator.New(db, directory)
+	subFS, err := fs.Sub(migrations, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("error while applying migrations: %w", err)
+	}
+	migrator, err := migrator.New(db, subFS)
 	if err != nil {
 		return nil, fmt.Errorf("error while applying migrations: %w", err)
 	}
@@ -86,4 +88,18 @@ func openDB() (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func runServer(db *sql.DB, mailSender email.Sender) error {
+	defer func() { _ = db.Close() }()
+	log.Print("Starting application")
+
+	app, err := wishlister.NewWithConfig(db, mailSender)
+	if err != nil {
+		return err
+	}
+
+	server.New(server.Config{Wishlister: app}).Run()
+
+	return nil
 }
