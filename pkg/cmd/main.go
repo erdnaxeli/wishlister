@@ -43,13 +43,16 @@ func main() {
 	if cfg.Email == "off" {
 		mailSender = email.NoMailer{}
 	} else {
-		mailSender = email.NewSMTPSender(
+		mailSender, err = email.NewSMTPSender(
 			"contact@malistedevoeux.fr",
 			cfg.EmailPassword,
 			"mail.infomaniak.fr",
 			465,
 			"\"Ma liste de voeux.fr\" <contact@malistedevoeux.fr>",
 		)
+		if err != nil {
+			log.Fatalf("Error while creating mail client: %s", err)
+		}
 	}
 
 	db, err := openDB()

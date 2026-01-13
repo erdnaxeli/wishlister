@@ -38,7 +38,13 @@ func (a *app) CreateWishList(
 		return "", "", err
 	}
 
-	err = a.emailSender.SendNewWishListEmail(params.UserEmail, params.Username, listID, adminID)
+	err = a.emailSender.SendNewWishListEmail(
+		ctx,
+		params.UserEmail,
+		params.Username,
+		listID,
+		adminID,
+	)
 	if err != nil {
 		log.Print(err)
 	}
