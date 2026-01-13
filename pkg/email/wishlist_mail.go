@@ -1,13 +1,15 @@
 package email
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-hermes/hermes/v2"
-	"gopkg.in/gomail.v2"
+	"github.com/wneessen/go-mail"
 )
 
 func (s smtpSender) SendNewWishListEmail(
+	ctx context.Context,
 	to string,
 	username string,
 	listID string,
@@ -18,14 +20,22 @@ func (s smtpSender) SendNewWishListEmail(
 		return err
 	}
 
-	mail := gomail.NewMessage()
-	mail.SetHeader("From", s.from)
-	mail.SetHeader("To", to)
-	mail.SetHeader("Subject", "Liste de voeux créé")
-	mail.SetBody("text/html", htmlBody)
-	mail.AddAlternative("text/plain", textBody)
+	mailMsg := mail.NewMsg()
+	err = mailMsg.From(s.from)
+	if err != nil {
+		return err
+	}
 
-	err = s.dialer.DialAndSend(mail)
+	err = mailMsg.To(to)
+	if err != nil {
+		return err
+	}
+
+	mailMsg.Subject("Liste de voeux créé")
+	mailMsg.SetBodyString(mail.TypeTextHTML, htmlBody)
+	mailMsg.AddAlternativeString(mail.TypeTextPlain, textBody)
+
+	err = s.client.DialAndSendWithContext(ctx, mailMsg)
 	if err != nil {
 		return err
 	}

@@ -1,13 +1,15 @@
 package email
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-hermes/hermes/v2"
-	"gopkg.in/gomail.v2"
+	"github.com/wneessen/go-mail"
 )
 
 func (s smtpSender) SendMagicLink(
+	ctx context.Context,
 	to string,
 	magicLink string,
 ) error {
@@ -16,14 +18,20 @@ func (s smtpSender) SendMagicLink(
 		return err
 	}
 
-	mail := gomail.NewMessage()
-	mail.SetHeader("From", s.from)
-	mail.SetHeader("To", to)
-	mail.SetHeader("Subject", "Votre lien de connexion")
-	mail.SetBody("text/html", htmlBody)
-	mail.AddAlternative("text/plain", textBody)
+	mailMsg := mail.NewMsg()
+	err = mailMsg.From(s.from)
+	if err != nil {
+		return err
+	}
+	err = mailMsg.To(to)
+	if err != nil {
+		return err
+	}
+	mailMsg.Subject("Votre lien de connexion")
+	mailMsg.SetBodyString(mail.TypeTextHTML, htmlBody)
+	mailMsg.AddAlternativeString(mail.TypeTextPlain, textBody)
 
-	err = s.dialer.DialAndSend(mail)
+	err = s.client.DialAndSendWithContext(ctx, mailMsg)
 	if err != nil {
 		return err
 	}

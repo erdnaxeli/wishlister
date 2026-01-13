@@ -66,7 +66,7 @@ func (a *app) SendMagicLink(ctx context.Context, email string) error {
 		return err
 	}
 
-	return a.emailSender.SendMagicLink(email, session.MagicLinkToken)
+	return a.emailSender.SendMagicLink(ctx, email, session.MagicLinkToken)
 }
 
 func (a *app) GetSession(ctx context.Context, sessionID string) (Session, error) {
