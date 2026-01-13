@@ -1,6 +1,6 @@
 module github.com/erdnaxeli/wishlister
 
-go 1.25
+go 1.25.5
 
 tool (
 	github.com/cortesi/modd/cmd/modd
@@ -11,6 +11,7 @@ tool (
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/dave/jennifer v1.7.1
+	github.com/erdnaxeli/migrator v0.1.0
 	github.com/go-hermes/hermes/v2 v2.6.2
 	github.com/go-playground/form v3.1.4+incompatible
 	github.com/go-playground/validator/v10 v10.30.1

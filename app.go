@@ -10,9 +10,6 @@ import (
 
 	"github.com/erdnaxeli/wishlister/pkg/email"
 	"github.com/erdnaxeli/wishlister/pkg/repository"
-
-	// register sqlite driver
-	_ "modernc.org/sqlite"
 )
 
 // CreateWishlistParams represents the parameters to create a new wishlist.
