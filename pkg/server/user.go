@@ -4,71 +4,66 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
 )
 
 type sendMagicLinkForm struct {
 	Email string `form:"email" validate:"required,email,max=255"`
 }
 
-func (s Server) sendMagicLink(c echo.Context) error {
-	form := sendMagicLinkForm{}
-	err := c.Bind(&form)
-	if err != nil {
-		s.e.Logger.Error("failed to bind send magic link form: ", err)
-
-		return renderOK(c, s.templates.RenderLogin, ParamsLogin{
-			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer.",
-			Email: form.Email,
-		})
+func (s Server) sendMagicLink(w http.ResponseWriter, r *http.Request) {
+	form := sendMagicLinkForm{
+		Email: r.PostFormValue("email"),
 	}
 
-	err = s.validate.Struct(form)
+	err := s.validate.Struct(form)
 	if err != nil {
-		return s.handleSendMagicLinkError(c, form, err)
+		s.handleSendMagicLinkError(w, form, err)
+		return
 	}
 
-	err = s.wishlister.SendMagicLink(c.Request().Context(), form.Email)
+	err = s.wishlister.SendMagicLink(r.Context(), form.Email)
 	if err != nil {
-		s.e.Logger.Error("failed to send magic link: ", err)
+		s.logger.Error("failed to send magic link", "err", err)
 
-		return renderOK(c, s.templates.RenderLogin, ParamsLogin{
+		s.renderOK(w, s.templates.RenderLogin, ParamsLogin{
 			Error: "Erreur lors de l'envoi du lien magique, veuillez réessayer.",
 			Email: form.Email,
 		})
+		return
 	}
 
-	return renderOK(c, s.templates.RenderLogin, ParamsLogin{
+	s.renderOK(w, s.templates.RenderLogin, ParamsLogin{
 		Email: form.Email,
 		Sent:  true,
 	})
 }
 
 func (s Server) handleSendMagicLinkError(
-	c echo.Context,
+	w http.ResponseWriter,
 	form sendMagicLinkForm,
 	validationErr error,
-) error {
+) {
 	params := ParamsLogin{
 		Email: form.Email,
 	}
 
 	var invalidErr *validator.InvalidValidationError
 	if errors.As(validationErr, &invalidErr) {
-		s.e.Logger.Error("invalid validation error: ", invalidErr)
+		s.logger.Error("invalid validation error", "err", invalidErr)
 
 		params.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-		return renderOK(c, s.templates.RenderLogin, params)
+		s.renderOK(w, s.templates.RenderLogin, params)
 	}
 
 	var validationErrors validator.ValidationErrors
 	if errors.As(validationErr, &validationErrors) {
 		if len(validationErrors) == 0 {
 			// that should not happen
-			s.e.Logger.Error("validation errors but length is 0")
+			s.logger.Error("validation errors but length is 0")
 			params.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-			return renderOK(c, s.templates.RenderLogin, params)
+			s.renderOK(w, s.templates.RenderLogin, params)
 		}
 
 		validationErr := validationErrors[0]
@@ -82,35 +77,36 @@ func (s Server) handleSendMagicLinkError(
 			case "max":
 				params.EmailError = "L'adresse email est trop longue."
 			default:
-				s.e.Logger.Error("unknown email validation error tag: ", validationErr.Tag())
+				s.logger.Error("unknown email validation error tag", "tag", validationErr.Tag())
 			}
 		default:
-			s.e.Logger.Error("unknown validation error field: ", validationErr.Field())
+			s.logger.Error("unknown validation error field", "field", validationErr.Field())
 		}
 
-		return renderOK(c, s.templates.RenderLogin, params)
+		s.renderOK(w, s.templates.RenderLogin, params)
 	}
 
-	s.e.Logger.Error("unknown error during form validation: ", validationErr)
+	s.logger.Error("unknown error during form validation", "err", validationErr)
 	params.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-	return renderOK(c, s.templates.RenderLogin, params)
+	s.renderOK(w, s.templates.RenderLogin, params)
 }
 
-func (s Server) handleMagicLink(c echo.Context) error {
-	token := c.Param("token")
-	session, err := s.wishlister.GetSessionByMagicLink(c.Request().Context(), token)
+func (s Server) handleMagicLink(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	session, err := s.wishlister.GetSessionByMagicLink(r.Context(), token)
 	if err != nil {
-		s.e.Logger.Error("failed to get session from magic link: ", err)
-		return renderOK(c, s.templates.RenderLogin, ParamsLogin{
+		s.logger.Error("failed to get session from magic link", "err", err)
+		s.renderOK(w, s.templates.RenderLogin, ParamsLogin{
 			Error: "Le lien magique est invalide ou a expiré. Veuillez réessayer.",
 		})
+		return
 	}
 
-	s.setUserSessionCookie(c, session.SessionID)
-	return c.Redirect(302, "/lists")
+	s.setUserSessionCookie(w, session.SessionID)
+	http.Redirect(w, r, "/lists", http.StatusFound)
 }
 
-func (s Server) setUserSessionCookie(c echo.Context, sessionID string, expire ...bool) {
+func (s Server) setUserSessionCookie(w http.ResponseWriter, sessionID string, expire ...bool) {
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionID,
@@ -123,27 +119,30 @@ func (s Server) setUserSessionCookie(c echo.Context, sessionID string, expire ..
 		cookie.MaxAge = -1
 	}
 
-	c.SetCookie(cookie)
+	http.SetCookie(w, cookie)
 }
 
-func (s Server) getUserWishLists(c echo.Context) error {
-	sessionIDCookie, err := c.Cookie("session_id")
+func (s Server) getUserWishLists(w http.ResponseWriter, r *http.Request) {
+	sessionIDCookie, err := r.Cookie("session_id")
 	if err != nil {
-		return c.Redirect(302, "/login")
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
 	}
 
-	session, err := s.wishlister.GetSession(c.Request().Context(), sessionIDCookie.Value)
+	session, err := s.wishlister.GetSession(r.Context(), sessionIDCookie.Value)
 	if err != nil {
-		s.e.Logger.Error("failed to get session from cookie: ", err)
-		return c.Redirect(302, "/login")
+		s.logger.Error("failed to get session from cookie", "err", err)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
 	}
 
-	lists, err := s.wishlister.GetUserWishLists(c.Request().Context(), session.UserID)
+	lists, err := s.wishlister.GetUserWishLists(r.Context(), session.UserID)
 	if err != nil {
-		s.e.Logger.Error("failed to get user wish lists: ", err)
-		return renderOK(c, s.templates.RenderUserListsView, ParamsUserListsView{
+		s.logger.Error("failed to get user wish lists: ", "err", err)
+		s.renderOK(w, s.templates.RenderUserListsView, ParamsUserListsView{
 			Error: "Erreur lors de la récupération de vos listes de souhaits. Veuillez réessayer plus tard.",
 		})
+		return
 	}
 
 	params := ParamsUserListsView{}
@@ -154,15 +153,16 @@ func (s Server) getUserWishLists(c echo.Context) error {
 			Name:    list.Name,
 		})
 	}
-	return renderOK(c, s.templates.RenderUserListsView, params)
+
+	s.renderOK(w, s.templates.RenderUserListsView, params)
 }
 
-func (s Server) logout(c echo.Context) error {
-	sessionIDCookie, err := c.Cookie("session_id")
+func (s Server) logout(w http.ResponseWriter, r *http.Request) {
+	sessionIDCookie, err := r.Cookie("session_id")
 	if err == nil {
-		s.wishlister.DeleteSession(c.Request().Context(), sessionIDCookie.Value)
+		s.wishlister.DeleteSession(r.Context(), sessionIDCookie.Value)
 	}
 
-	s.setUserSessionCookie(c, "", true)
-	return renderOK(c, s.templates.RenderLogout, nil)
+	s.setUserSessionCookie(w, "", true)
+	s.renderOK(w, s.templates.RenderLogout, nil)
 }

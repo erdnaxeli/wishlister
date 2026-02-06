@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/erdnaxeli/wishlister"
 )
@@ -15,31 +15,36 @@ type getWishListParam struct {
 	ListID  string `param:"listID"`
 }
 
-func (s Server) getWishList(c echo.Context) error {
-	params := getWishListParam{}
-	err := c.Bind(&params)
-	if err != nil {
-		return err
+func readWishListParam(r *http.Request) getWishListParam {
+	return getWishListParam{
+		AdminID: chi.URLParam(r, "adminID"),
+		ListID:  chi.URLParam(r, "listID"),
 	}
+}
+
+func (s Server) getWishList(w http.ResponseWriter, r *http.Request) {
+	params := readWishListParam(r)
 
 	var list wishlister.WishList
-	ctx := c.Request().Context()
+	var err error
 
 	if params.AdminID == "" {
-		list, err = s.wishlister.GetWishList(ctx, params.ListID)
+		list, err = s.wishlister.GetWishList(r.Context(), params.ListID)
 		if err != nil {
-			return err
+			s.logger.Error("error while getting wishlist", "err", err)
+			panic(err)
 		}
 	} else {
-		list, err = s.wishlister.GetEditableWishList(ctx, params.ListID, params.AdminID)
+		list, err = s.wishlister.GetEditableWishList(r.Context(), params.ListID, params.AdminID)
 		if err != nil {
 			if errors.Is(err, wishlister.ErrWishListInvalidAdminID) {
-				return c.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/%s", params.ListID))
+				http.Redirect(w, r, fmt.Sprintf("/%s", params.ListID), http.StatusMovedPermanently)
+				return
 			}
 
-			return err
+			panic(err)
 		}
 	}
 
-	return renderOK(c, s.templates.RenderListView, list)
+	s.renderOK(w, s.templates.RenderListView, list)
 }

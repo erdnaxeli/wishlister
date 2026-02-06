@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-playground/form"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	"github.com/erdnaxeli/wishlister"
@@ -42,49 +41,49 @@ type editListFormElement struct {
 // HTML form.
 var ErrInvalidForm = errors.New("invalid form")
 
-func (s Server) editList(c echo.Context) error {
-	params := getWishListParam{}
-	err := c.Bind(&params)
-	if err != nil {
-		return err
-	}
+func (s Server) editList(w http.ResponseWriter, r *http.Request) {
+	params := readWishListParam(r)
 
 	list, err := s.wishlister.GetEditableWishList(
-		c.Request().Context(),
+		r.Context(),
 		params.ListID,
 		params.AdminID,
 	)
 	if err != nil {
 		if errors.Is(err, wishlister.ErrWishListNotFound) {
-			return render(c, http.StatusNotFound, s.templates.RenderListNotFound, nil)
+			s.render(w, http.StatusNotFound, s.templates.RenderListNotFound, nil)
+			return
 		}
 
 		if errors.Is(err, wishlister.ErrWishListInvalidAdminID) {
-			return render(c, http.StatusForbidden, s.templates.RenderListAccessDenied, nil)
+			s.render(w, http.StatusForbidden, s.templates.RenderListAccessDenied, nil)
+			return
 		}
 
-		return err
+		panic(err)
 	}
 
 	var data editListForm
 
-	if c.Request().Method == http.MethodPost {
+	if r.Method == http.MethodPost {
 		var ok bool
-		data, ok, err = s.validateEditForm(c)
+		data, ok, err = s.validateEditForm(r)
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		if ok {
-			err := s.updateList(c, data, params.ListID, params.AdminID)
+			err := s.updateList(r, data, params.ListID, params.AdminID)
 			if err != nil {
-				return err
+				panic(err)
 			}
 
-			return c.Redirect(
-				http.StatusSeeOther,
+			http.Redirect(
+				w, r,
 				fmt.Sprintf("/l/%s/%s", params.ListID, params.AdminID),
+				http.StatusSeeOther,
 			)
+			return
 		}
 	} else {
 		data = listToEditData(list)
@@ -92,7 +91,7 @@ func (s Server) editList(c echo.Context) error {
 
 	dataJSON, err := json.Marshal(data.Elements)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	tmplParams := listEditTmplParams{
@@ -100,22 +99,24 @@ func (s Server) editList(c echo.Context) error {
 		Data: string(dataJSON),
 	}
 
-	return renderOK(c, s.templates.RenderListEdit, tmplParams)
+	s.renderOK(w, s.templates.RenderListEdit, tmplParams)
 }
 
-func (s Server) validateEditForm(c echo.Context) (editListForm, bool, error) {
+func (s Server) validateEditForm(
+	r *http.Request,
+) (editListForm, bool, error) {
 	data := editListForm{}
 	ok := true
 	decoder := form.NewDecoder()
-	values, err := c.FormParams()
+	err := r.ParseForm()
 	if err != nil {
-		c.Logger().Print("Error while reading wishlist elements form: %s", err)
+		s.logger.Error("Error while reading wishlist elements form", "err", err)
 		return data, false, err
 	}
 
-	err = decoder.Decode(&data, values)
+	err = decoder.Decode(&data, r.Form)
 	if err != nil {
-		c.Logger().Print("Error while decoding wishlist elements form: %s", err)
+		s.logger.Error("Error while decoding wishlist elements form", "err", err)
 		return data, false, err
 	}
 
@@ -129,7 +130,7 @@ func (s Server) validateEditForm(c echo.Context) (editListForm, bool, error) {
 }
 
 func (s Server) updateList(
-	c echo.Context,
+	r *http.Request,
 	form editListForm,
 	listID string,
 	adminID string,
@@ -144,7 +145,7 @@ func (s Server) updateList(
 		}
 	}
 
-	return s.wishlister.UpdateListElements(c.Request().Context(), listID, adminID, elements)
+	return s.wishlister.UpdateListElements(r.Context(), listID, adminID, elements)
 }
 
 func listToEditData(list wishlister.WishList) editListForm {
