@@ -3,67 +3,62 @@ package server
 import (
 	"io"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
 )
 
 func (s Server) setRoutes() {
-	s.e.GET("/", renderOKFunc(s.templates.RenderIndex, nil))
+	s.router.Get("/", s.renderOKFunc(s.templates.RenderIndex, nil))
 
-	s.e.GET("/login", renderOKFunc(s.templates.RenderLogin, nil))
-	s.e.POST("/login", s.sendMagicLink)
-	s.e.GET("/login/magic/:token", s.handleMagicLink)
-	s.e.GET("/logout", s.logout)
-	s.e.GET("/lists", s.getUserWishLists)
+	s.router.Get("/login", s.renderOKFunc(s.templates.RenderLogin, nil))
+	s.router.Post("/login", s.sendMagicLink)
+	s.router.Get("/login/magic/{token}", s.handleMagicLink)
+	s.router.Get("/logout", s.logout)
+	s.router.Get("/lists", s.getUserWishLists)
 
-	s.e.GET("/new", s.getNewWishList)
-	s.e.POST("/new", s.createNewWishList)
+	s.router.Get("/new", s.getNewWishList)
+	s.router.Post("/new", s.createNewWishList)
 
-	s.e.GET("/group/new", renderOKFunc(s.templates.RenderNewGroup, nil))
-	s.e.POST("/group/new", s.createNewGroup)
+	s.router.Get("/group/new", s.renderOKFunc(s.templates.RenderNewGroup, nil))
+	s.router.Post("/group/new", s.createNewGroup)
 
-	s.e.GET("/l/:listID", s.getWishList)
-	s.e.GET("/l/:listID/:adminID", s.getWishList)
-	s.e.GET("/l/:listID/:adminID/edit", s.editList)
-	s.e.POST("/l/:listID/:adminID/edit", s.editList)
+	s.router.Get("/l/{listID}", s.getWishList)
+	s.router.Get("/l/{listID}/{adminID}", s.getWishList)
+	s.router.Get("/l/{listID}/{adminID}/edit", s.editList)
+	s.router.Post("/l/{listID}/{adminID}/edit", s.editList)
 
 	// 404 page
-	s.e.GET("/*", renderFunc(http.StatusNotFound, s.templates.RenderNotFoundError, nil))
+	s.router.Get("/*", s.renderFunc(http.StatusNotFound, s.templates.RenderNotFoundError, nil))
 }
 
-func renderOKFunc(templateFunc func(io.Writer, any) error, data any) func(echo.Context) error {
-	return func(c echo.Context) error {
-		return renderOK(c, templateFunc, data)
+func (s Server) renderOKFunc(templateFunc func(io.Writer, any) error, data any) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		s.renderOK(w, templateFunc, data)
 	}
 }
 
-func renderFunc(
+func (s Server) renderFunc(
 	code int,
 	templateFunc func(io.Writer, any) error,
 	data any,
-) func(echo.Context) error {
-	return func(c echo.Context) error {
-		return render(c, code, templateFunc, data)
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		s.render(w, code, templateFunc, data)
 	}
 }
 
-func renderOK(c echo.Context, templateFunc func(io.Writer, any) error, data any) error {
-	return render(c, http.StatusOK, templateFunc, data)
+func (s Server) renderOK(w http.ResponseWriter, templateFunc func(io.Writer, any) error, data any) {
+	s.render(w, http.StatusOK, templateFunc, data)
 }
 
-func render(c echo.Context, code int, templateFunc func(io.Writer, any) error, data any) error {
-	response := c.Response()
-
-	header := response.Header()
-	if header.Get(echo.HeaderContentType) == "" {
-		header.Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
-	}
-
-	response.WriteHeader(code)
-	err := templateFunc(response.Writer, data)
+func (s Server) render(
+	w http.ResponseWriter,
+	code int,
+	templateFunc func(io.Writer, any) error,
+	data any,
+) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(code)
+	err := templateFunc(w, data)
 	if err != nil {
-		return err
+		s.logger.Error("error while rendering template", "err", err)
 	}
-
-	return nil
 }

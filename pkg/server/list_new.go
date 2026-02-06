@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
 
 	"github.com/erdnaxeli/wishlister"
 )
@@ -17,38 +16,32 @@ type createWishListForm struct {
 	Email string `form:"email" validate:"omitempty,email,max=255"`
 }
 
-func (s Server) getNewWishList(c echo.Context) error {
+func (s Server) getNewWishList(w http.ResponseWriter, r *http.Request) {
 	params := ParamsNew{}
 
-	sessionIDCookie, err := c.Cookie("session_id")
+	sessionIDCookie, err := r.Cookie("session_id")
 	if err == nil {
-		session, err := s.wishlister.GetSession(c.Request().Context(), sessionIDCookie.Value)
+		session, err := s.wishlister.GetSession(r.Context(), sessionIDCookie.Value)
 		if err == nil {
 			params.User = session.Username
 			params.Email = session.UserEmail
 		}
 	}
 
-	return renderOK(c, s.templates.RenderNew, params)
+	s.renderOK(w, s.templates.RenderNew, params)
 }
 
-func (s Server) createNewWishList(c echo.Context) error {
-	form := createWishListForm{}
-	err := c.Bind(&form)
-	if err != nil {
-		s.e.Logger.Error("failed to bind create wish list form: ", err)
-
-		return renderOK(c, s.templates.RenderNew, ParamsNew{
-			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer.",
-			Name:  form.Name,
-			User:  form.User,
-			Email: form.Email,
-		})
+func (s Server) createNewWishList(w http.ResponseWriter, r *http.Request) {
+	form := createWishListForm{
+		Name:  r.PostFormValue("name"),
+		User:  r.PostFormValue("user"),
+		Email: r.PostFormValue("email"),
 	}
 
-	err = s.validate.Struct(form)
+	err := s.validate.Struct(form)
 	if err != nil {
-		return s.handleNewWishListError(c, form, err)
+		s.handleNewWishListError(w, form, err)
+		return
 	}
 
 	params := wishlister.CreateWishlistParams{
@@ -58,29 +51,30 @@ func (s Server) createNewWishList(c echo.Context) error {
 	}
 
 	listID, adminID, err := s.wishlister.CreateWishList(
-		c.Request().Context(),
+		r.Context(),
 		params,
 	)
 	if err != nil {
 		// We could get errors about empty fields here, but this should have been catched
 		// by the validation step before. So we just log and return a generic error.
-		s.e.Logger.Error("failed to create new wish list: ", err)
-		return renderOK(c, s.templates.RenderNew, ParamsNew{
+		s.logger.Error("failed to create new wish list: ", "err", err)
+		s.renderOK(w, s.templates.RenderNew, ParamsNew{
 			Error: "Erreur lors de la soumission du formulaire, veuillez réessayer",
 			Name:  form.Name,
 			User:  form.User,
 			Email: form.Email,
 		})
+		return
 	}
 
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("l/%s/%s", listID, adminID))
+	http.Redirect(w, r, fmt.Sprintf("l/%s/%s", listID, adminID), http.StatusSeeOther)
 }
 
 func (s Server) handleNewWishListError(
-	c echo.Context,
+	w http.ResponseWriter,
 	form createWishListForm,
 	err error,
-) error {
+) {
 	formError := ParamsNew{
 		Name:  form.Name,
 		User:  form.User,
@@ -89,107 +83,114 @@ func (s Server) handleNewWishListError(
 
 	var invalidErr *validator.InvalidValidationError
 	if errors.As(err, &invalidErr) {
-		s.e.Logger.Error("invalid validation error: ", err)
+		s.logger.Error("invalid validation error", "err", err)
 
 		formError.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-		return renderOK(c, s.templates.RenderNew, formError)
+		s.renderOK(w, s.templates.RenderNew, formError)
+		return
 	}
 
 	var validationErrors validator.ValidationErrors
 	if errors.As(err, &validationErrors) {
-		return s.handleNewWishListValidationsErrors(c, formError, validationErrors)
+		s.handleNewWishListValidationsErrors(w, formError, validationErrors)
+		return
 	}
 
-	s.e.Logger.Error("unknown error during form validation: ", err)
+	s.logger.Error("unknown error during form validation: ", "err", err)
 	formError.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-	return renderOK(c, s.templates.RenderNew, formError)
+	s.renderOK(w, s.templates.RenderNew, formError)
 }
 
 func (s Server) handleNewWishListValidationsErrors(
-	c echo.Context,
+	w http.ResponseWriter,
 	formError ParamsNew,
 	validationErrors validator.ValidationErrors,
-) error {
+) {
 	if len(validationErrors) == 0 {
 		// that should not happend
-		s.e.Logger.Error("validation errors but length is 0")
+		s.logger.Error("validation errors but length is 0")
 		formError.Error = "Erreur lors de la soumission du formulaire, veuillez réessayer."
-		return renderOK(c, s.templates.RenderNew, formError)
+		s.renderOK(w, s.templates.RenderNew, formError)
+		return
 	}
 
 	validationErr := validationErrors[0]
 	switch validationErr.Field() {
 	case "Name":
-		return s.handleNewWishListNameError(c, formError, validationErr)
+		s.handleNewWishListNameError(w, formError, validationErr)
+		return
 	case "User":
-		return s.handleNewWishListUserError(c, formError, validationErr)
+		s.handleNewWishListUserError(w, formError, validationErr)
+		return
 	case "Email":
-		return s.handleNewWishListEmailError(c, formError, validationErr)
+		s.handleNewWishListEmailError(w, formError, validationErr)
+		return
 	default:
-		s.e.Logger.Error("unknown validation error field: ", validationErr.Field())
-		return renderOK(c, s.templates.RenderNew, formError)
+		s.logger.Error("unknown validation error field", "field", validationErr.Field())
+		s.renderOK(w, s.templates.RenderNew, formError)
+		return
 	}
 }
 
 func (s Server) handleNewWishListNameError(
-	c echo.Context,
+	w http.ResponseWriter,
 	formError ParamsNew,
 	validationErr validator.FieldError,
-) error {
+) {
 	switch validationErr.Tag() {
 	case "required":
 		formError.NameError = "Le nom est requis."
 	case "max":
 		formError.NameError = "Le nom doit faire moins de 255 caractères."
 	default:
-		s.e.Logger.Error(
-			"unknown validation error tag on name field: ",
-			validationErr.Tag(),
+		s.logger.Error(
+			"unknown validation error tag on name field",
+			"tag", validationErr.Tag(),
 		)
 		formError.NameError = "Le nom est requis et doit faire moins de 255 caractères."
 	}
 
-	return renderOK(c, s.templates.RenderNew, formError)
+	s.renderOK(w, s.templates.RenderNew, formError)
 }
 
 func (s Server) handleNewWishListUserError(
-	c echo.Context,
+	w http.ResponseWriter,
 	formError ParamsNew,
 	validationErr validator.FieldError,
-) error {
+) {
 	switch validationErr.Tag() {
 	case "required":
 		formError.UserError = "Le nom d'utilisateur est requis."
 	case "max":
 		formError.UserError = "Le nom d'utilisateur doit faire moins de 255 caractères."
 	default:
-		s.e.Logger.Error(
-			"unknown validation error tag on user field: ",
-			validationErr.Tag(),
+		s.logger.Error(
+			"unknown validation error tag on user field",
+			"tag", validationErr.Tag(),
 		)
 		formError.UserError = "Le nom d'utilisateur est requis et doit faire moins de 255 caractères."
 	}
 
-	return renderOK(c, s.templates.RenderNew, formError)
+	s.renderOK(w, s.templates.RenderNew, formError)
 }
 
 func (s Server) handleNewWishListEmailError(
-	c echo.Context,
+	w http.ResponseWriter,
 	formError ParamsNew,
 	validationErr validator.FieldError,
-) error {
+) {
 	switch validationErr.Tag() {
 	case "email":
 		formError.EmailError = "L'adresse email n'est pas valide."
 	case "max":
 		formError.EmailError = "L'adresse email doit faire moins de 255 caractères."
 	default:
-		s.e.Logger.Error(
+		s.logger.Error(
 			"unknown validation error tag on email field: ",
-			validationErr.Tag(),
+			"tag", validationErr.Tag(),
 		)
 		formError.EmailError = "L'adresse email est requise et doit faire moins de 255 caractères."
 	}
 
-	return renderOK(c, s.templates.RenderNew, formError)
+	s.renderOK(w, s.templates.RenderNew, formError)
 }

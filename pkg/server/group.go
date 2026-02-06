@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/erdnaxeli/wishlister"
 )
 
@@ -14,28 +12,29 @@ type createGroupForm struct {
 	Email string `form:"email" validate:"required,email,max=255"`
 }
 
-func (s Server) createNewGroup(c echo.Context) error {
-	form := createGroupForm{}
-	err := c.Bind(&form)
-	if err != nil {
-		return err
+func (s Server) createNewGroup(w http.ResponseWriter, r *http.Request) {
+	form := createGroupForm{
+		Name:  r.PostFormValue("name"),
+		Email: r.PostFormValue("email"),
 	}
 
-	err = s.validate.Struct(form)
+	err := s.validate.Struct(form)
 	if err != nil {
-		return err
+		s.logger.Error("validation error", "err", err)
+		return
 	}
 
 	groupID, err := s.wishlister.CreateGroup(
-		c.Request().Context(),
+		r.Context(),
 		wishlister.CreateGroupParams{
 			Name:      form.Name,
 			UserEmail: form.Email,
 		},
 	)
 	if err != nil {
-		return err
+		s.logger.Error("error while creating group", "err", err)
+		return
 	}
 
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/g/%s", groupID))
+	http.Redirect(w, r, fmt.Sprintf("/g/%s", groupID), http.StatusSeeOther)
 }

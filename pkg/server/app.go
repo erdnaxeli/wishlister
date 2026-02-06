@@ -2,16 +2,21 @@
 package server
 
 import (
+	"log/slog"
+	"net/http"
+	"os"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/erdnaxeli/wishlister"
 )
 
 // Server expose a single method Run() to run the web server.
 type Server struct {
-	e          *echo.Echo
+	logger     slog.Logger
+	router     chi.Router
 	templates  Templates
 	validate   *validator.Validate
 	wishlister wishlister.App
@@ -26,17 +31,15 @@ type Config struct {
 func New(config Config) Server {
 	templates := NewTemplates()
 
-	e := echo.New()
-	e.Debug = true
-	e.Pre(
-		middleware.RemoveTrailingSlashWithConfig(middleware.TrailingSlashConfig{RedirectCode: 308}),
-	)
-	e.Use(middleware.RequestLogger())
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	s := Server{
-		e:          e,
+		logger:     *slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		router:     router,
 		templates:  templates,
 		validate:   validate,
 		wishlister: config.Wishlister,
@@ -52,5 +55,5 @@ func New(config Config) Server {
 //
 // It blocks forever.
 func (s Server) Run() {
-	s.e.Logger.Fatal(s.e.Start(":8080"))
+	s.logger.Error("error while running server", "err", http.ListenAndServe(":3000", s.router))
 }
