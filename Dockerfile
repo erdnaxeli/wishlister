@@ -5,7 +5,7 @@ ARG VERSION
 WORKDIR /src
 RUN go install github.com/erdnaxeli/wishlister/pkg/cmd@v${VERSION}
 
-FROM cgr.dev/chainguard/static:latest@sha256:11ec91f0372630a2ca3764cea6325bebb0189a514084463cbb3724e5bb350d14
+FROM cgr.dev/chainguard/static:latest@sha256:d6a97eb401cbc7c6d48be76ad81d7899b94303580859d396b52b67bc84ea7345
 
 WORKDIR /app
 COPY --from=build /go/bin/cmd /app/server
