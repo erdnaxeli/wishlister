@@ -1,4 +1,4 @@
-FROM golang:latest@sha256:b54cbf583d390341599d7bcbc062425c081105cc5ef6d170ced98ef9d047c716 AS build
+FROM golang:latest@sha256:13605dbaf3aff39741644cc3a6ec74cac494f955d1401ffee49b55032fa8a626 AS build
 
 ARG CGO_ENABLED=0
 ARG VERSION
