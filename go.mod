@@ -17,7 +17,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0
 	github.com/matoous/go-nanoid/v2 v2.1.0
-	github.com/wneessen/go-mail v0.7.2
+	github.com/wneessen/go-mail v0.7.3
 	golang.org/x/text v0.37.0
 	modernc.org/sqlite v1.50.1
 )
