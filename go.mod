@@ -19,7 +19,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/wneessen/go-mail v0.7.3
 	golang.org/x/text v0.37.0
-	modernc.org/sqlite v1.51.0
+	modernc.org/sqlite v1.52.0
 )
 
 require (
