@@ -1,6 +1,6 @@
 module github.com/erdnaxeli/wishlister
 
-go 1.25.5
+go 1.26.0
 
 tool (
 	github.com/cortesi/modd/cmd/modd
@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/wneessen/go-mail v0.8.1
-	golang.org/x/text v0.41.0
+	golang.org/x/text v0.42.0
 	modernc.org/sqlite v1.58.0
 )
 
@@ -101,7 +101,7 @@ require (
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
 	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
