@@ -8,7 +8,7 @@ tool (
 )
 
 require (
-	github.com/caarlos0/env/v11 v11.4.1
+	github.com/caarlos0/env/v11 v11.4.2
 	github.com/dave/jennifer v1.7.1
 	github.com/erdnaxeli/migrator v0.1.0
 	github.com/go-chi/chi/v5 v5.5.0
