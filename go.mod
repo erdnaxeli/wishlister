@@ -1,6 +1,6 @@
 module github.com/erdnaxeli/wishlister
 
-go 1.26.0
+go 1.26.10
 
 tool (
 	github.com/cortesi/modd/cmd/modd
@@ -17,7 +17,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/google/uuid v1.6.0
 	github.com/matoous/go-nanoid/v2 v2.1.0
-	github.com/wneessen/go-mail v0.8.1
+	github.com/wneessen/go-mail v0.8.2
 	golang.org/x/text v0.43.0
 	modernc.org/sqlite v1.61.1
 )
